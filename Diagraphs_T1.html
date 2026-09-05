@@ -1,0 +1,1377 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digraph Spelling Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --red:#ff4757;--yellow:#ffd32a;--blue:#1e90ff;--green:#2ed573;
+  --orange:#ff6b35;--pink:#ff6eb4;--purple:#a29bfe;--teal:#00cec9;
+  --dark:#1a1a2e;--mid:#555;--light:#f8f6ff;--white:#ffffff;
+  --cream:#fffdf4;--ink:#1a1a2e;
+  --digraph-bg:#ff6eb4;--digraph-text:#fff;
+  --shadow:5px 5px 0;--radius:18px;
+}
+
+body{font-family:'Nunito',sans-serif;background:var(--cream);min-height:100vh;overflow-x:hidden;
+  background-image:radial-gradient(circle at 10% 15%,#ffecb3 0%,transparent 30%),
+  radial-gradient(circle at 90% 10%,#c8e6ff 0%,transparent 28%),
+  radial-gradient(circle at 50% 92%,#d4f8e8 0%,transparent 28%),
+  radial-gradient(circle at 12% 85%,#ffd6d6 0%,transparent 22%);}
+
+.screen{display:none}.screen.active{display:block}
+#screen-transition.active{display:flex}
+
+/* ── SHARED HEADER ── */
+.game-header{text-align:center;padding:20px 20px 8px}
+.game-header h1{font-family:'Boogaloo',cursive;font-size:clamp(1.6rem,5vw,2.4rem);color:var(--dark)}
+.game-header h1 span{color:var(--pink)}
+.game-header p{color:var(--mid);font-size:.9rem;margin-top:3px;font-weight:700}
+.level-pill{display:inline-block;color:#fff;font-family:'Boogaloo',cursive;font-size:.85rem;
+  padding:4px 16px;border-radius:50px;margin-top:6px;letter-spacing:.4px;
+  border:2px solid var(--dark);box-shadow:2px 2px 0 var(--dark)}
+
+/* ── SCORE BAR ── */
+.score-bar{display:flex;justify-content:center;gap:10px;padding:5px 16px 2px;flex-wrap:wrap}
+.badge{background:#fff;border-radius:50px;padding:4px 13px;font-weight:800;font-size:.8rem;
+  box-shadow:3px 3px 0 var(--dark);border:2px solid var(--dark);display:flex;align-items:center;gap:4px}
+.badge .num{font-size:.95rem}
+
+/* ── GAME AREA ── */
+.game-area{display:flex;flex-direction:column;gap:16px;padding:8px 16px 40px;max-width:820px;margin:0 auto}
+.panel{background:#fff;border-radius:var(--radius);padding:16px;
+  box-shadow:var(--shadow) var(--dark);border:2.5px solid var(--dark)}
+.section-label{text-transform:uppercase;font-size:.72rem;font-weight:800;color:var(--mid);letter-spacing:.5px;margin-bottom:10px}
+
+/* ── SPEED CONTROL ── */
+.speed-control{background:#fff;border-radius:var(--radius);padding:11px 16px;
+  box-shadow:var(--shadow) var(--dark);border:2.5px solid var(--dark);
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.speed-control label{font-weight:800;color:var(--dark);font-size:.8rem;white-space:nowrap}
+.speed-control input[type=range]{flex:1;min-width:80px;accent-color:var(--pink);cursor:pointer}
+.speed-btns{display:flex;gap:4px}
+.speed-btn{border:2px solid var(--dark);background:#fff;border-radius:8px;padding:3px 9px;
+  font-family:'Nunito',sans-serif;font-weight:800;font-size:.7rem;cursor:pointer;color:var(--dark);transition:all .15s}
+.speed-btn:hover,.speed-btn.active{background:var(--dark);color:#fff}
+.speed-display{font-family:'Boogaloo',cursive;font-size:.92rem;color:var(--mid);min-width:40px;text-align:right}
+
+/* ── BUTTONS ── */
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+.btn-primary,.btn-secondary,.btn-next{border:2.5px solid var(--dark);border-radius:50px;
+  padding:9px 20px;font-family:'Boogaloo',cursive;font-size:.95rem;cursor:pointer;
+  transition:transform .12s,box-shadow .12s;box-shadow:3px 3px 0 var(--dark)}
+.btn-primary{background:var(--dark);color:#fff}
+.btn-secondary{background:var(--light);color:var(--dark)}
+.btn-next{background:linear-gradient(135deg,var(--green),var(--teal));color:#fff;font-size:1rem;padding:12px 28px}
+.btn-primary:hover,.btn-secondary:hover,.btn-next:hover{transform:translateY(-2px);box-shadow:5px 5px 0 var(--dark)}
+
+/* ── HOME SCREEN ── */
+#screen-home{min-height:100vh}
+.home-header{text-align:center;padding:28px 20px 14px}
+.home-header h1{font-family:'Boogaloo',cursive;font-size:clamp(2rem,7vw,3.2rem);color:var(--dark);line-height:1.1}
+.home-header h1 .hl{color:var(--pink);background:var(--yellow);padding:0 8px;border-radius:8px;
+  border:3px solid var(--dark);display:inline-block;transform:rotate(-1deg)}
+.home-header p{color:var(--mid);font-size:1rem;margin-top:6px;font-weight:700}
+.rainbow-bar{height:5px;border-radius:50px;background:linear-gradient(90deg,
+  var(--red),var(--orange),var(--yellow),var(--green),var(--blue),var(--purple));
+  max-width:480px;margin:12px auto 0}
+
+.sets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:14px;padding:8px 18px 14px;max-width:820px;margin:0 auto}
+
+.set-card{background:#fff;border-radius:20px;padding:20px 14px 16px;
+  box-shadow:4px 4px 0 var(--dark);border:2.5px solid var(--dark);
+  cursor:pointer;transition:transform .15s,box-shadow .15s;text-align:center;
+  position:relative;overflow:hidden;animation:fadeIn .3s ease both}
+.set-card:hover{transform:translateY(-5px) rotate(-1deg);box-shadow:7px 7px 0 var(--dark)}
+.set-card .color-stripe{position:absolute;top:0;left:0;right:0;height:6px}
+.set-card .digraph-badge{font-family:'Boogaloo',cursive;font-size:2rem;
+  background:var(--pink);color:#fff;border:3px solid var(--dark);border-radius:12px;
+  display:inline-block;padding:2px 14px;margin-bottom:8px;box-shadow:3px 3px 0 var(--dark)}
+.set-card .set-label{font-family:'Boogaloo',cursive;font-size:1rem;color:var(--dark);margin-bottom:4px}
+.set-card .set-example{font-size:.78rem;font-weight:700;color:var(--mid);margin-bottom:8px}
+.set-card .set-count{font-size:.7rem;font-weight:800;color:#fff;background:var(--dark);
+  border-radius:20px;padding:2px 10px;display:inline-block}
+
+.home-footer{text-align:center;padding:10px 20px 24px}
+.teacher-link{background:none;border:2.5px solid #ccc;border-radius:50px;padding:7px 18px;
+  font-family:'Nunito',sans-serif;font-weight:700;font-size:.8rem;color:var(--mid);cursor:pointer;transition:all .15s}
+.teacher-link:hover{border-color:var(--dark);color:var(--dark)}
+
+/* ── TEACHER SCREEN ── */
+#screen-teacher{min-height:100vh}
+.teacher-header{background:var(--dark);color:#fff;padding:16px 20px;display:flex;
+  align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.teacher-header h2{font-family:'Boogaloo',cursive;font-size:1.5rem}
+.teacher-header .th-sub{font-size:.78rem;opacity:.7;margin-top:1px}
+.teacher-body{max-width:860px;margin:0 auto;padding:18px 16px 48px;display:flex;flex-direction:column;gap:14px}
+.t-section-title{font-family:'Boogaloo',cursive;font-size:1.1rem;color:var(--dark);margin-bottom:3px}
+.t-section-sub{font-size:.76rem;color:var(--mid);font-weight:600}
+.teacher-sets-list{display:flex;flex-direction:column;gap:9px}
+.teacher-set-row{background:#fff;border-radius:13px;padding:13px 15px;
+  box-shadow:3px 3px 0 var(--dark);border:2px solid var(--dark);
+  display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.tsr-badge{font-family:'Boogaloo',cursive;font-size:1rem;background:var(--pink);color:#fff;
+  border:2px solid var(--dark);border-radius:8px;padding:2px 10px;flex-shrink:0;min-width:52px;text-align:center}
+.tsr-info{flex:1;min-width:120px}
+.tsr-name{font-family:'Boogaloo',cursive;font-size:.97rem;color:var(--dark)}
+.tsr-words{font-size:.72rem;color:var(--mid);font-weight:600;margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:360px}
+.tsr-actions{display:flex;gap:5px;flex-shrink:0}
+.tsr-btn{border:2px solid var(--dark);border-radius:8px;padding:4px 11px;
+  font-family:'Nunito',sans-serif;font-weight:800;font-size:.72rem;cursor:pointer;transition:opacity .15s}
+.tsr-btn:hover{opacity:.75}
+.tsr-edit{background:#e8f5e9;color:#2e7d32}.tsr-del{background:#fce4ec;color:#c62828}
+
+.add-set-panel{background:#fff;border-radius:var(--radius);padding:18px;
+  box-shadow:3px 3px 0 var(--dark);border:2px solid var(--dark)}
+.add-set-panel h3{font-family:'Boogaloo',cursive;font-size:1.1rem;color:var(--dark);margin-bottom:12px}
+.form-row{display:flex;gap:9px;margin-bottom:10px;flex-wrap:wrap}
+.form-field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px}
+.form-field label{font-size:.72rem;font-weight:800;color:var(--mid);text-transform:uppercase;letter-spacing:.4px}
+.form-field input,.form-field select,.form-field textarea{border:2px solid var(--dark);border-radius:9px;
+  padding:8px 11px;font-family:'Nunito',sans-serif;font-size:.88rem;color:var(--dark);
+  transition:border-color .2s;resize:vertical}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{outline:none;border-color:var(--pink)}
+.form-field textarea{min-height:78px}
+.form-hint{font-size:.7rem;color:var(--mid);margin-top:2px}
+
+.download-section{background:linear-gradient(135deg,var(--dark),#2d3436);border-radius:var(--radius);
+  padding:20px 22px;color:#fff;text-align:center;border:2px solid var(--dark)}
+.download-section h3{font-family:'Boogaloo',cursive;font-size:1.15rem;margin-bottom:5px}
+.download-section p{font-size:.81rem;opacity:.8;margin-bottom:14px;line-height:1.5}
+.btn-download{background:linear-gradient(135deg,var(--green),var(--teal));color:#fff;border:2.5px solid var(--dark);
+  border-radius:50px;padding:12px 30px;font-family:'Boogaloo',cursive;font-size:.98rem;
+  cursor:pointer;box-shadow:3px 3px 0 rgba(0,0,0,.3);transition:transform .15s}
+.btn-download:hover{transform:translateY(-2px)}
+
+/* ── PASSWORD MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:20px;padding:32px 28px;max-width:330px;width:92%;text-align:center;
+  border:3px solid var(--dark);box-shadow:6px 6px 0 var(--dark);animation:popIn .35s cubic-bezier(.175,.885,.32,1.275)}
+.modal-box h3{font-family:'Boogaloo',cursive;font-size:1.5rem;color:var(--dark);margin-bottom:5px}
+.modal-box p{color:var(--mid);font-size:.84rem;font-weight:600;margin-bottom:14px}
+.modal-box input{width:100%;border:2.5px solid var(--dark);border-radius:9px;padding:10px 13px;
+  font-size:.97rem;font-family:'Nunito',sans-serif;text-align:center;letter-spacing:3px;margin-bottom:7px}
+.modal-box input:focus{outline:none;border-color:var(--pink)}
+.modal-error{color:var(--red);font-size:.78rem;font-weight:700;min-height:18px;margin-bottom:9px}
+.modal-actions{display:flex;gap:8px;justify-content:center}
+
+/* ── LEVEL 1: DRAG TO SPEAKER ── */
+.audio-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px}
+.audio-btn{position:relative;border-radius:14px;padding:13px 9px 10px;display:flex;
+  flex-direction:column;align-items:center;gap:6px;cursor:pointer;border:3px dashed transparent;
+  transition:transform .15s,box-shadow .15s,border-color .2s;min-height:84px;
+  font-family:'Nunito',sans-serif;font-weight:800;font-size:.75rem;color:#fff;text-transform:uppercase}
+.audio-btn:hover:not(.matched){transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,.15)}
+.audio-btn .speaker-icon{font-size:1.6rem}
+.audio-btn.speaking .speaker-icon{animation:pulse .5s ease infinite alternate}
+.audio-btn .btn-sublabel{font-size:.63rem;opacity:.85}
+.audio-btn.drag-over{border-color:#fff;transform:scale(1.06)}
+.audio-btn.correct{animation:correctFlash .5s ease}
+.audio-btn.wrong{animation:wrongShake .4s ease}
+.audio-btn.matched{opacity:.4;pointer-events:none;filter:grayscale(.5)}
+.audio-btn .matched-tag{position:absolute;top:4px;right:4px;background:rgba(255,255,255,.3);
+  border-radius:20px;padding:1px 6px;font-size:.6rem;font-weight:900;display:none}
+.audio-btn.matched .matched-tag{display:block}
+
+.words-grid{display:flex;flex-wrap:wrap;gap:8px}
+.word-card{background:var(--dark);color:#fff;border-radius:10px;padding:8px 14px;
+  font-family:'Boogaloo',cursive;font-size:1.1rem;cursor:grab;user-select:none;
+  transition:transform .15s,box-shadow .15s,opacity .3s;
+  box-shadow:3px 3px 0 rgba(0,0,0,.2);border:2px solid rgba(255,255,255,.15)}
+.word-card:hover{transform:translateY(-3px) rotate(-1deg)}
+.word-card.dragging{opacity:.3;cursor:grabbing;transform:scale(.95)}
+.word-card.matched{opacity:0;pointer-events:none;transform:scale(.5)}
+.word-count-hint{font-size:.7rem;color:#b2bec3;text-align:center;margin-top:7px}
+
+/* ── DIGRAPH CHUNK TILES (L2 + L3) ── */
+.chunk-tile{border-radius:11px;display:flex;align-items:center;justify-content:center;
+  font-family:'Boogaloo',cursive;font-size:1.5rem;user-select:none;
+  transition:transform .12s,opacity .2s,box-shadow .12s;
+  border:3px solid var(--dark)}
+
+.chunk-tile.is-digraph{
+  background:var(--pink);color:#fff;
+  box-shadow:3px 3px 0 var(--dark);
+  min-width:62px;height:60px;padding:0 8px}
+
+.chunk-tile.is-letter{
+  background:#fff;color:var(--dark);
+  box-shadow:3px 3px 0 var(--dark);
+  width:52px;height:60px}
+
+/* source (draggable) */
+.chunk-source{cursor:grab}
+.chunk-source:hover{transform:translateY(-4px)}
+.chunk-source.ch-used{opacity:.18;pointer-events:none;transform:scale(.88)}
+.chunk-source.ch-dragging{opacity:.3;cursor:grabbing}
+
+/* answer slot */
+.chunk-slot{border:3px dashed #d0d0d0;background:#fafafa;color:var(--dark);cursor:default;min-width:52px;height:60px}
+.chunk-slot.is-digraph-slot{min-width:62px;height:60px;padding:0 8px;background:#fff0f8;border-color:var(--pink)}
+.chunk-slot.ch-filled{background:var(--dark);color:#fff;border-color:var(--dark);cursor:pointer;animation:slotFill .18s ease}
+.chunk-slot.ch-filled.is-digraph-slot{background:var(--pink);border-color:var(--pink)}
+.chunk-slot.ch-over{border-color:var(--pink);background:#fff0f8;transform:scale(1.07)}
+.chunk-slot.ch-correct{background:var(--green)!important;border-color:var(--green)!important;color:#fff}
+.chunk-slot.ch-wrong{background:var(--red)!important;border-color:var(--red)!important;color:#fff;animation:wrongShake .4s ease}
+
+.chunk-row{display:flex;justify-content:center;flex-wrap:wrap;gap:7px;padding:8px 4px;min-height:72px}
+
+/* ── LEVEL 2 PLAY BTN ── */
+.lx-play-btn{display:flex;align-items:center;justify-content:center;gap:9px;
+  color:#fff;border:2.5px solid var(--dark);border-radius:13px;padding:13px 20px;
+  font-family:'Boogaloo',cursive;font-size:1.1rem;cursor:pointer;width:100%;
+  transition:transform .12s,box-shadow .12s;box-shadow:3px 3px 0 var(--dark)}
+.lx-play-btn:hover{transform:translateY(-2px);box-shadow:5px 5px 0 var(--dark)}
+.play-btn-speaking{animation:speakerPulse .6s ease infinite alternate}
+
+.progress-row{display:flex;align-items:center;gap:11px}
+.word-counter{font-family:'Boogaloo',cursive;font-size:.95rem;color:var(--mid);white-space:nowrap}
+.progress-bar-outer{flex:1;height:13px;background:#eee;border-radius:50px;overflow:hidden;border:2px solid var(--dark)}
+.progress-bar-inner{height:100%;border-radius:50px;transition:width .4s ease}
+
+.lx-feedback{text-align:center;font-family:'Boogaloo',cursive;font-size:1.15rem;min-height:30px;margin-top:6px}
+.fb-correct{color:var(--green)}.fb-wrong{color:var(--red)}
+
+.check-btn{color:#fff;border:2.5px solid var(--dark);border-radius:13px;padding:12px 26px;
+  font-family:'Boogaloo',cursive;font-size:.97rem;cursor:pointer;width:100%;
+  transition:transform .12s,box-shadow .12s;box-shadow:3px 3px 0 var(--dark)}
+.check-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:5px 5px 0 var(--dark)}
+.check-btn:disabled{opacity:.35;cursor:default}
+.clear-btn{background:var(--light);color:var(--dark);border:2.5px solid var(--dark);border-radius:13px;
+  padding:12px 20px;font-family:'Boogaloo',cursive;font-size:.92rem;cursor:pointer;
+  box-shadow:3px 3px 0 var(--dark);transition:transform .12s}
+.clear-btn:hover{transform:translateY(-2px)}
+
+/* ── LEVEL 4: SINGLE LETTER BANK ── */
+.letter-bank{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;padding:5px 3px}
+.letter-tile{width:50px;height:56px;border-radius:10px;background:#fff;border:3px solid var(--dark);
+  display:flex;align-items:center;justify-content:center;font-family:'Boogaloo',cursive;
+  font-size:1.5rem;color:var(--dark);cursor:pointer;transition:transform .12s,background .15s;
+  user-select:none;box-shadow:3px 3px 0 var(--dark)}
+.letter-tile:hover{transform:translateY(-4px);background:var(--dark);color:#fff}
+.letter-tile.used{opacity:.18;pointer-events:none;transform:scale(.88)}
+
+.l4-display{display:flex;justify-content:center;align-items:center;gap:5px;flex-wrap:wrap;min-height:66px;padding:7px}
+.l4-slot{width:50px;height:60px;border-radius:10px;border:3px dashed #d0d0d0;
+  display:flex;align-items:center;justify-content:center;font-family:'Boogaloo',cursive;
+  font-size:1.5rem;color:var(--dark);background:#fafafa;transition:all .2s}
+.l4-slot.filled{background:var(--dark);color:#fff;border-color:var(--dark);cursor:pointer;animation:slotFill .18s ease}
+.l4-slot.correct-slot{background:var(--green);border-color:var(--green);color:#fff}
+.l4-slot.wrong-slot{background:var(--red);border-color:var(--red);color:#fff;animation:wrongShake .4s ease}
+
+/* ── TRANSITION SCREEN ── */
+#screen-transition{min-height:100vh;align-items:center;justify-content:center;
+  flex-direction:column;text-align:center;padding:36px 18px}
+.transition-card{background:#fff;border-radius:26px;padding:42px 36px;max-width:420px;width:100%;
+  box-shadow:6px 6px 0 var(--dark);border:3px solid var(--dark);
+  animation:popIn .5s cubic-bezier(.175,.885,.32,1.275)}
+.transition-card .big-emoji{font-size:4rem;display:block;margin-bottom:12px;animation:bounce 1s ease infinite}
+.transition-card h2{font-family:'Boogaloo',cursive;font-size:2rem;color:var(--dark);margin-bottom:7px}
+.transition-card .sub{color:var(--mid);font-size:.9rem;font-weight:700;margin-bottom:5px}
+.level-up-tag{display:inline-block;color:#fff;font-family:'Boogaloo',cursive;font-size:.9rem;
+  padding:5px 16px;border-radius:50px;margin:8px 0 18px;border:2px solid var(--dark);box-shadow:2px 2px 0 var(--dark)}
+.transition-card p.desc{color:var(--mid);font-size:.84rem;font-weight:600;background:#f8f9fa;
+  border-radius:11px;padding:11px 14px;margin-bottom:20px;line-height:1.6}
+
+/* ── RESULT OVERLAY ── */
+.result-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;align-items:center;justify-content:center}
+.result-overlay.show{display:flex}
+.result-card{background:#fff;border-radius:22px;padding:36px 30px;text-align:center;max-width:350px;width:92%;
+  box-shadow:6px 6px 0 var(--dark);border:3px solid var(--dark);
+  animation:popIn .4s cubic-bezier(.175,.885,.32,1.275)}
+.result-card .r-emoji{font-size:3.2rem;display:block;margin-bottom:10px}
+.result-card h2{font-family:'Boogaloo',cursive;font-size:1.9rem;color:var(--dark);margin-bottom:6px}
+.result-card p{color:var(--mid);font-size:.86rem;font-weight:600;margin-bottom:14px}
+.next-hint{border-radius:10px;padding:9px 13px;font-size:.8rem;font-weight:700;margin-bottom:14px;color:#fff;
+  border:2px solid var(--dark)}
+.result-actions{display:flex;flex-direction:column;gap:8px}
+
+/* ── DIGRAPH HINT PANEL ── */
+.digraph-hint{display:flex;align-items:center;justify-content:center;gap:10px;
+  background:#fff0f8;border:2.5px solid var(--pink);border-radius:14px;padding:10px 16px;flex-wrap:wrap}
+.digraph-hint .dh-label{font-size:.78rem;font-weight:800;color:var(--pink);text-transform:uppercase;letter-spacing:.5px}
+.digraph-showcase{font-family:'Boogaloo',cursive;font-size:1.8rem;color:#fff;
+  background:var(--pink);border:3px solid var(--dark);border-radius:10px;
+  padding:2px 14px;box-shadow:3px 3px 0 var(--dark)}
+.digraph-example{font-size:.85rem;font-weight:700;color:var(--mid)}
+.digraph-example .hl{color:var(--pink);font-weight:900}
+
+/* ── ANIMATIONS ── */
+@keyframes pulse{from{transform:scale(1)}to{transform:scale(1.3)}}
+@keyframes correctFlash{0%{transform:scale(1)}30%{transform:scale(1.12)}100%{transform:scale(1)}}
+@keyframes wrongShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+@keyframes popIn{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes speakerPulse{from{transform:scale(1)}to{transform:scale(1.03)}}
+@keyframes slotFill{from{transform:scale(.8)}to{transform:scale(1)}}
+@keyframes floatUp{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-60px) scale(1.5);opacity:0}}
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+.float-emoji{position:fixed;font-size:2rem;pointer-events:none;animation:floatUp .8s ease forwards;z-index:200}
+.confetti-piece{position:fixed;pointer-events:none;z-index:300;border-radius:2px;animation:confettiFall linear forwards}
+</style>
+</head>
+<body>
+
+<!-- ══ HOME ══ -->
+<div class="screen active" id="screen-home">
+  <div class="home-header">
+    <h1>🔊 <span class="hl">Digraph</span> Spelling!</h1>
+    <p>Choose a digraph set to begin</p>
+    <div class="rainbow-bar"></div>
+  </div>
+  <div class="sets-grid" id="sets-grid"></div>
+  <div class="home-footer">
+    <button class="teacher-link" onclick="showPwModal()">🔐 Teacher Mode</button>
+  </div>
+</div>
+
+<!-- ══ TEACHER ══ -->
+<div class="screen" id="screen-teacher">
+  <div class="teacher-header">
+    <div><h2>👩‍🏫 Teacher Mode</h2><div class="th-sub">Manage digraph word sets</div></div>
+    <button class="btn-secondary" style="font-family:'Boogaloo',cursive" onclick="showScreen('screen-home')">← Back</button>
+  </div>
+  <div class="teacher-body">
+    <div><div class="t-section-title">📚 Digraph Sets</div>
+    <div class="t-section-sub">Edit words in any set, or add a new custom set.</div></div>
+    <div class="teacher-sets-list" id="teacher-sets-list"></div>
+    <div class="add-set-panel">
+      <h3 id="add-panel-title">➕ Add / Edit Set</h3>
+      <div class="form-row">
+        <div class="form-field" style="max-width:160px">
+          <label>Digraph (e.g. oo, ee, ai)</label>
+          <input type="text" id="t-digraph-input" placeholder="e.g. oo" maxlength="3">
+          <div class="form-hint">The 2 letters that stay together.</div>
+        </div>
+        <div class="form-field" style="max-width:220px">
+          <label>Set Label (optional)</label>
+          <input type="text" id="t-label-input" placeholder="e.g. oo as in moon" maxlength="40">
+          <div class="form-hint">Shown on the set card.</div>
+        </div>
+        <div class="form-field" style="max-width:180px">
+          <label>Example word</label>
+          <input type="text" id="t-example-input" placeholder="e.g. moon" maxlength="20">
+          <div class="form-hint">Shown on the home card.</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Words (comma or new line separated)</label>
+          <textarea id="t-words-input" placeholder="moon, soon, cool, pool, tool, food…"></textarea>
+          <div class="form-hint">4–12 words recommended. Used across all 4 levels.</div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" id="save-set-btn" onclick="saveSet()">💾 Save Set</button>
+        <button class="btn-secondary" id="cancel-edit-btn" style="display:none" onclick="cancelEdit()">✕ Cancel</button>
+      </div>
+    </div>
+    <div class="download-section">
+      <h3>📥 Save &amp; Share with Students</h3>
+      <p>Download the updated game file and share it — students open it in any browser, no internet needed!</p>
+      <button class="btn-download" onclick="downloadGame()">⬇ Download Updated Game File</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LEVEL 1 ══ -->
+<div class="screen" id="screen-level1">
+  <div class="game-header">
+    <h1>🔊 <span>Listen &amp; Match</span></h1>
+    <p id="l1-set-label">Drag each word to its speaker!</p>
+    <span class="level-pill" style="background:var(--red)">⭐ Level 1 — Listen &amp; Match</span>
+  </div>
+  <div class="score-bar">
+    <div class="badge">✅ <span class="num" id="l1-matched">0</span>/<span class="num" id="l1-total">0</span></div>
+    <div class="badge">❌ <span class="num" id="l1-misses">0</span> misses</div>
+    <div class="badge">🎯 <span class="num" id="l1-acc">—</span></div>
+  </div>
+  <div class="game-area">
+    <div id="l1-digraph-hint" class="digraph-hint panel"></div>
+    <div class="speed-control">
+      <label>🔊 Speed:</label>
+      <div class="speed-btns">
+        <button class="speed-btn" onclick="setSpeed(.5,'l1')" id="l1-btn-slow">🐢 Slow</button>
+        <button class="speed-btn active" onclick="setSpeed(.7,'l1')" id="l1-btn-clear">🗣️ Clear</button>
+        <button class="speed-btn" onclick="setSpeed(1,'l1')" id="l1-btn-normal">⚡ Normal</button>
+      </div>
+      <input type="range" id="l1-speed-slider" min=".3" max="1.2" step=".05" value=".7" oninput="onSliderChange(this.value,'l1')">
+      <span class="speed-display" id="l1-speed-display">0.7×</span>
+    </div>
+    <div class="panel">
+      <div class="section-label">🔊 Tap a speaker to hear the word, then drag the matching word card to it</div>
+      <div class="audio-grid" id="l1-audio-grid"></div>
+    </div>
+    <div class="panel">
+      <div class="section-label">📦 Drag a word to its speaker</div>
+      <div class="words-grid" id="l1-words-grid"></div>
+      <div class="word-count-hint" id="l1-hint"></div>
+    </div>
+    <div class="btn-row" style="justify-content:center">
+      <button class="btn-secondary" onclick="showScreen('screen-home')">🏠 Sets</button>
+      <button class="btn-secondary" onclick="buildLevel1()">🔄 Restart</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TRANSITION L1→L2 ══ -->
+<div class="screen" id="screen-transition" style="background:linear-gradient(135deg,#ffd32a,var(--pink),var(--purple))">
+  <div class="transition-card">
+    <span class="big-emoji">🏆</span>
+    <h2>Perfect Score!</h2>
+    <div class="sub">Every word matched — zero mistakes!</div>
+    <div class="level-up-tag" style="background:var(--pink)">🔓 Levels 2, 3 &amp; 4 Unlocked!</div>
+    <p class="desc">All levels are now open. Choose your next challenge!</p>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <button class="btn-next" style="background:linear-gradient(135deg,var(--orange),var(--yellow));color:var(--dark)" onclick="startLevel2()">🔀 Level 2 — Unscramble Chunks</button>
+      <button class="btn-next" style="background:linear-gradient(135deg,var(--blue),var(--purple))" onclick="startLevel3()">🧩 Level 3 — Click Chunks to Spell</button>
+      <button class="btn-next" style="background:linear-gradient(135deg,var(--green),var(--teal))" onclick="startLevel4()">🔤 Level 4 — Spell Letter by Letter</button>
+      <button class="btn-secondary" onclick="showScreen('screen-home')">🏠 Back to Sets</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LEVEL 2 ══ -->
+<div class="screen" id="screen-level2">
+  <div class="game-header">
+    <h1>🔀 <span>Unscramble!</span></h1>
+    <p id="l2-set-label">Hear the word — drag the chunks into order!</p>
+    <span class="level-pill" style="background:linear-gradient(135deg,var(--orange),var(--yellow));color:var(--dark)">🔀 Level 2 — Unscramble Chunks</span>
+  </div>
+  <div class="score-bar">
+    <div class="badge">✅ <span class="num" id="l2-done">0</span>/<span class="num" id="l2-total">0</span></div>
+    <div class="badge">❌ <span class="num" id="l2-mistakes">0</span></div>
+    <div class="badge">⭐ <span class="num" id="l2-score">0</span> pts</div>
+  </div>
+  <div class="game-area">
+    <div id="l2-digraph-hint" class="digraph-hint panel"></div>
+    <div class="speed-control">
+      <label>🔊 Speed:</label>
+      <div class="speed-btns">
+        <button class="speed-btn" onclick="setSpeed(.5,'l2')" id="l2-btn-slow">🐢 Slow</button>
+        <button class="speed-btn active" onclick="setSpeed(.7,'l2')" id="l2-btn-clear">🗣️ Clear</button>
+        <button class="speed-btn" onclick="setSpeed(1,'l2')" id="l2-btn-normal">⚡ Normal</button>
+      </div>
+      <input type="range" id="l2-speed-slider" min=".3" max="1.2" step=".05" value=".7" oninput="onSliderChange(this.value,'l2')">
+      <span class="speed-display" id="l2-speed-display">0.7×</span>
+    </div>
+    <div class="panel"><div class="progress-row">
+      <span class="word-counter" id="l2-counter">Word 1 of 8</span>
+      <div class="progress-bar-outer"><div class="progress-bar-inner" id="l2-bar" style="width:0%;background:linear-gradient(90deg,var(--orange),var(--yellow))"></div></div>
+    </div></div>
+    <button class="lx-play-btn" id="l2-play-btn" style="background:linear-gradient(135deg,var(--orange),var(--yellow));color:var(--dark)" onclick="l2PlayWord()">
+      <span>🔊</span><span id="l2-play-label">Hear the word</span>
+    </button>
+    <div class="panel">
+      <div class="section-label">🔀 Drag these chunks into the correct order below — the <span style="color:var(--pink);font-weight:900">pink chunk</span> is the digraph!</div>
+      <div class="chunk-row" id="l2-source"></div>
+    </div>
+    <div class="panel">
+      <div class="section-label">📝 Drop chunks here to build the word — click a placed chunk to return it</div>
+      <div class="chunk-row" id="l2-answer"></div>
+      <div class="lx-feedback" id="l2-feedback"></div>
+    </div>
+    <div style="display:flex;gap:9px">
+      <button class="clear-btn" onclick="l2Clear()">↩ Clear</button>
+      <button class="check-btn" id="l2-check-btn" style="background:linear-gradient(135deg,var(--orange),var(--yellow));color:var(--dark)" onclick="l2Check()" disabled>✔ Check Word</button>
+    </div>
+    <div class="btn-row" style="justify-content:center">
+      <button class="btn-secondary" onclick="showScreen('screen-home')">🏠 Sets</button>
+      <button class="btn-secondary" onclick="buildLevel2()">🔄 Restart</button>
+      <button class="btn-secondary" onclick="buildLevel1();showScreen('screen-level1')">⬅ L1</button>
+      <button class="btn-secondary" onclick="startLevel3()">L3 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LEVEL 3 ══ -->
+<div class="screen" id="screen-level3">
+  <div class="game-header">
+    <h1>🧩 <span>Build It!</span></h1>
+    <p id="l3-set-label">Hear the word — click chunks to spell it!</p>
+    <span class="level-pill" style="background:linear-gradient(135deg,var(--blue),var(--purple))">🧩 Level 3 — Click Chunks</span>
+  </div>
+  <div class="score-bar">
+    <div class="badge">✅ <span class="num" id="l3-done">0</span>/<span class="num" id="l3-total">0</span></div>
+    <div class="badge">❌ <span class="num" id="l3-mistakes">0</span></div>
+    <div class="badge">⭐ <span class="num" id="l3-score">0</span> pts</div>
+  </div>
+  <div class="game-area">
+    <div id="l3-digraph-hint" class="digraph-hint panel"></div>
+    <div class="speed-control">
+      <label>🔊 Speed:</label>
+      <div class="speed-btns">
+        <button class="speed-btn" onclick="setSpeed(.5,'l3')" id="l3-btn-slow">🐢 Slow</button>
+        <button class="speed-btn active" onclick="setSpeed(.7,'l3')" id="l3-btn-clear">🗣️ Clear</button>
+        <button class="speed-btn" onclick="setSpeed(1,'l3')" id="l3-btn-normal">⚡ Normal</button>
+      </div>
+      <input type="range" id="l3-speed-slider" min=".3" max="1.2" step=".05" value=".7" oninput="onSliderChange(this.value,'l3')">
+      <span class="speed-display" id="l3-speed-display">0.7×</span>
+    </div>
+    <div class="panel"><div class="progress-row">
+      <span class="word-counter" id="l3-counter">Word 1 of 8</span>
+      <div class="progress-bar-outer"><div class="progress-bar-inner" id="l3-bar" style="width:0%;background:linear-gradient(90deg,var(--blue),var(--purple))"></div></div>
+    </div></div>
+    <button class="lx-play-btn" id="l3-play-btn" style="background:linear-gradient(135deg,var(--blue),var(--purple))" onclick="l3PlayWord()">
+      <span>🔊</span><span id="l3-play-label">Hear the word</span>
+    </button>
+    <div class="panel">
+      <div class="section-label">📝 Build the word here — click a placed chunk to remove it</div>
+      <div class="chunk-row" id="l3-answer"></div>
+      <div class="lx-feedback" id="l3-feedback"></div>
+    </div>
+    <div class="panel">
+      <div class="section-label">🧩 Click a chunk to place it — <span style="color:var(--pink);font-weight:900">pink = digraph</span></div>
+      <div class="chunk-row" id="l3-bank"></div>
+    </div>
+    <div style="display:flex;gap:9px">
+      <button class="clear-btn" onclick="l3Clear()">↩ Clear</button>
+      <button class="check-btn" id="l3-check-btn" style="background:linear-gradient(135deg,var(--blue),var(--purple))" onclick="l3Check()" disabled>✔ Check Word</button>
+    </div>
+    <div class="btn-row" style="justify-content:center">
+      <button class="btn-secondary" onclick="showScreen('screen-home')">🏠 Sets</button>
+      <button class="btn-secondary" onclick="buildLevel3()">🔄 Restart</button>
+      <button class="btn-secondary" onclick="startLevel2()">⬅ L2</button>
+      <button class="btn-secondary" onclick="startLevel4()">L4 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LEVEL 4 ══ -->
+<div class="screen" id="screen-level4">
+  <div class="game-header">
+    <h1>🔤 <span>Spell It!</span></h1>
+    <p id="l4-set-label">Hear the word — click every letter to spell it!</p>
+    <span class="level-pill" style="background:linear-gradient(135deg,var(--green),var(--teal))">🔤 Level 4 — Spell Letter by Letter</span>
+  </div>
+  <div class="score-bar">
+    <div class="badge">✅ <span class="num" id="l4-done">0</span>/<span class="num" id="l4-total">0</span></div>
+    <div class="badge">❌ <span class="num" id="l4-mistakes">0</span></div>
+    <div class="badge">⭐ <span class="num" id="l4-score">0</span> pts</div>
+  </div>
+  <div class="game-area">
+    <div id="l4-digraph-hint" class="digraph-hint panel"></div>
+    <div class="speed-control">
+      <label>🔊 Speed:</label>
+      <div class="speed-btns">
+        <button class="speed-btn" onclick="setSpeed(.5,'l4')" id="l4-btn-slow">🐢 Slow</button>
+        <button class="speed-btn active" onclick="setSpeed(.7,'l4')" id="l4-btn-clear">🗣️ Clear</button>
+        <button class="speed-btn" onclick="setSpeed(1,'l4')" id="l4-btn-normal">⚡ Normal</button>
+      </div>
+      <input type="range" id="l4-speed-slider" min=".3" max="1.2" step=".05" value=".7" oninput="onSliderChange(this.value,'l4')">
+      <span class="speed-display" id="l4-speed-display">0.7×</span>
+    </div>
+    <div class="panel"><div class="progress-row">
+      <span class="word-counter" id="l4-counter">Word 1 of 8</span>
+      <div class="progress-bar-outer"><div class="progress-bar-inner" id="l4-bar" style="width:0%;background:linear-gradient(90deg,var(--green),var(--teal))"></div></div>
+    </div></div>
+    <button class="lx-play-btn" id="l4-play-btn" style="background:linear-gradient(135deg,var(--green),var(--teal))" onclick="l4PlayWord()">
+      <span>🔊</span><span id="l4-play-label">Hear the word</span>
+    </button>
+    <div class="panel">
+      <div class="section-label">🔤 Build the word here — click a letter to remove it</div>
+      <div class="l4-display" id="l4-display"></div>
+      <div class="lx-feedback" id="l4-feedback"></div>
+    </div>
+    <div class="panel">
+      <div class="section-label">🔡 Click letters to spell the word</div>
+      <div class="letter-bank" id="l4-bank"></div>
+    </div>
+    <div style="display:flex;gap:9px">
+      <button class="clear-btn" onclick="l4Clear()">↩ Clear</button>
+      <button class="check-btn" id="l4-check-btn" style="background:linear-gradient(135deg,var(--green),var(--teal))" onclick="l4Check()" disabled>✔ Check Word</button>
+    </div>
+    <div class="btn-row" style="justify-content:center">
+      <button class="btn-secondary" onclick="showScreen('screen-home')">🏠 Sets</button>
+      <button class="btn-secondary" onclick="buildLevel4()">🔄 Restart</button>
+      <button class="btn-secondary" onclick="startLevel3()">⬅ L3</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RESULT OVERLAYS ══ -->
+<div class="result-overlay" id="l1-result">
+  <div class="result-card">
+    <span class="r-emoji" id="l1-r-emoji">🎉</span>
+    <h2 id="l1-r-title">Done!</h2>
+    <p id="l1-r-msg"></p>
+    <div class="next-hint" id="l1-r-hint" style="display:none;background:var(--pink)">🏆 Perfect! Levels 2, 3 &amp; 4 unlocked!</div>
+    <div class="result-actions">
+      <button class="btn-next" id="l1-r-next" style="display:none;background:linear-gradient(135deg,var(--pink),var(--purple))" onclick="goTransition()">Next Levels →</button>
+      <button class="btn-primary" onclick="buildLevel1();closeResult('l1-result')">🔄 Try Again</button>
+      <button class="btn-secondary" onclick="showScreen('screen-home');closeResult('l1-result')">🏠 Sets</button>
+    </div>
+  </div>
+</div>
+
+<div class="result-overlay" id="l2-result">
+  <div class="result-card">
+    <span class="r-emoji" id="l2-r-emoji">🎉</span>
+    <h2 id="l2-r-title">Done!</h2><p id="l2-r-msg"></p>
+    <div class="result-actions">
+      <button class="btn-next" style="background:linear-gradient(135deg,var(--blue),var(--purple))" onclick="startLevel3();closeResult('l2-result')">Try Level 3 →</button>
+      <button class="btn-primary" style="background:linear-gradient(135deg,var(--orange),var(--yellow));color:var(--dark)" onclick="buildLevel2();closeResult('l2-result')">🔄 Again</button>
+      <button class="btn-secondary" onclick="showScreen('screen-home');closeResult('l2-result')">🏠 Sets</button>
+    </div>
+  </div>
+</div>
+
+<div class="result-overlay" id="l3-result">
+  <div class="result-card">
+    <span class="r-emoji" id="l3-r-emoji">🎉</span>
+    <h2 id="l3-r-title">Done!</h2><p id="l3-r-msg"></p>
+    <div class="result-actions">
+      <button class="btn-next" style="background:linear-gradient(135deg,var(--green),var(--teal))" onclick="startLevel4();closeResult('l3-result')">Try Level 4 →</button>
+      <button class="btn-primary" style="background:linear-gradient(135deg,var(--blue),var(--purple))" onclick="buildLevel3();closeResult('l3-result')">🔄 Again</button>
+      <button class="btn-secondary" onclick="showScreen('screen-home');closeResult('l3-result')">🏠 Sets</button>
+    </div>
+  </div>
+</div>
+
+<div class="result-overlay" id="l4-result">
+  <div class="result-card">
+    <span class="r-emoji" id="l4-r-emoji">🎉</span>
+    <h2 id="l4-r-title">Done!</h2><p id="l4-r-msg"></p>
+    <div class="result-actions">
+      <button class="btn-next" style="background:linear-gradient(135deg,var(--green),var(--teal))" onclick="buildLevel4();closeResult('l4-result')">🔄 Play Again</button>
+      <button class="btn-secondary" style="background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff" onclick="startLevel3();closeResult('l4-result')">⬅ Level 3</button>
+      <button class="btn-secondary" onclick="showScreen('screen-home');closeResult('l4-result')">🏠 Sets</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PASSWORD MODAL ══ -->
+<div class="modal-overlay" id="pw-modal">
+  <div class="modal-box">
+    <h3>🔐 Teacher Login</h3>
+    <p>Enter the password to manage word sets.</p>
+    <input type="password" id="pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkPw()">
+    <div class="modal-error" id="pw-error"></div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="checkPw()">Login</button>
+      <button class="btn-secondary" onclick="closePwModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// DIGRAPH SETS — DO NOT EDIT THIS LINE (used by download)
+var DIGRAPH_SETS = [
+  {"id":1,"digraph":"oo","label":"oo (book)","example":"book","words":["cook","hook","look","took","book","good","wood","foot","wool","brook","stood","shook"]},
+  {"id":2,"digraph":"oo","label":"oo (moon)","example":"moon","words":["moon","soon","cool","pool","tool","food","roof","zoom","boot","room","spoon","tooth"]},
+  {"id":3,"digraph":"ee","label":"ee (tree)","example":"tree","words":["tree","see","bee","feel","feet","keep","deep","week","seed","green","sheep","sleep"]},
+  {"id":4,"digraph":"ea","label":"ea (leaf)","example":"leaf","words":["leaf","read","eat","sea","bean","team","dream","steam","clean","cream","heat","beach"]},
+  {"id":5,"digraph":"ow","label":"ow (snow)","example":"snow","words":["snow","blow","flow","grow","show","slow","glow","know","bowl","crow","elbow","below"]},
+  {"id":6,"digraph":"oa","label":"oa (float)","example":"float","words":["boat","coat","goat","road","toad","load","soak","foam","toast","roast","float","cloak"]},
+  {"id":7,"digraph":"ai","label":"ai (rain)","example":"rain","words":["rain","tail","sail","mail","pain","wait","train","snail","chain","brain","plain","drain"]},
+  {"id":8,"digraph":"ay","label":"ay (play)","example":"play","words":["play","day","say","way","stay","clay","tray","spray","stray","away","today","okay"]}
+];
+// ══════════════════════════════════════════════════════════
+
+var TEACHER_PW = "teacher123";
+var PALETTE = ["#ff4757","#1e90ff","#2ed573","#ff6eb4","#ffd32a","#a29bfe","#ff6b35","#00cec9","#fdcb6e","#6c5ce7","#00b894","#e17055"];
+var SET_ICONS = ["📖","🌙","🌳","🍃","❄️","⛵","🌧️","🎨"];
+
+var currentSet = null;      // the full set object currently active
+var currentWords = [];      // words for current session
+var speechRate = 0.7;
+var synth = window.speechSynthesis;
+var activeSpeakingEl = null;
+
+// Per-level state
+var l1Matched=0, l1Misses=0, l1DragWord=null;
+var l2Words=[], l2Idx=0, l2Mistakes=0, l2Score=0, l2Word='', l2Chunks=[], l2AnswerArr=[], l2WordMistakes=0, l2Playing=false;
+var l3Words=[], l3Idx=0, l3Mistakes=0, l3Score=0, l3Word='', l3Chunks=[], l3Entered=[], l3WordMistakes=0, l3Playing=false;
+var l4Words=[], l4Idx=0, l4Mistakes=0, l4Score=0, l4Word='', l4Pool=[], l4Entered=[], l4WordMistakes=0, l4Playing=false;
+var editId = null;
+
+// ── SCREENS ──
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function closeResult(id){document.getElementById(id).classList.remove('show');}
+
+// ── DIGRAPH CHUNKING ──
+// Break a word into chunks: digraph stays together, rest are single letters
+// Returns array of {text, isDigraph}
+function chunkWord(word, digraph){
+  var chunks = [];
+  var i = 0;
+  var w = word.toLowerCase();
+  var d = digraph.toLowerCase();
+  while(i < w.length){
+    if(w.substr(i, d.length) === d){
+      chunks.push({text: d, isDigraph: true});
+      i += d.length;
+    } else {
+      chunks.push({text: w[i], isDigraph: false});
+      i++;
+    }
+  }
+  return chunks;
+}
+
+// ── HOME ──
+function renderHome(){
+  var g = document.getElementById('sets-grid'); g.innerHTML = '';
+  DIGRAPH_SETS.forEach(function(set, i){
+    var color = PALETTE[i % PALETTE.length];
+    var icon = SET_ICONS[i % SET_ICONS.length];
+    var card = document.createElement('div');
+    card.className = 'set-card';
+    card.style.animationDelay = (i * 0.06) + 's';
+    // Highlight the digraph in the example word
+    var exHighlight = set.example.replace(
+      new RegExp('(' + set.digraph + ')', 'i'),
+      '<span style="color:var(--pink);font-weight:900">$1</span>'
+    );
+    card.innerHTML =
+      '<div class="color-stripe" style="background:' + color + '"></div>' +
+      '<div class="digraph-badge">' + set.digraph.toUpperCase() + '</div>' +
+      '<div class="set-label">' + icon + ' ' + set.label + '</div>' +
+      '<div class="set-example">e.g. ' + exHighlight + '</div>' +
+      '<div class="set-count">' + set.words.length + ' words</div>';
+    card.addEventListener('click', function(){ launchSet(set, i); });
+    g.appendChild(card);
+  });
+}
+
+function launchSet(set, i){
+  currentSet = set;
+  currentWords = set.words.slice();
+  var lbl = set.label + ' · ';
+  document.getElementById('l1-set-label').textContent = lbl + 'Drag each word to its speaker!';
+  document.getElementById('l2-set-label').textContent = lbl + 'Drag chunks into order!';
+  document.getElementById('l3-set-label').textContent = lbl + 'Click chunks to spell it!';
+  document.getElementById('l4-set-label').textContent = lbl + 'Click every letter to spell it!';
+  // Render digraph hints
+  ['l1','l2','l3','l4'].forEach(function(pfx){ renderDigraphHint(pfx); });
+  buildLevel1();
+  showScreen('screen-level1');
+}
+
+function renderDigraphHint(pfx){
+  var el = document.getElementById(pfx + '-digraph-hint');
+  if(!el || !currentSet) return;
+  var exHighlight = currentSet.example.replace(
+    new RegExp('(' + currentSet.digraph + ')', 'i'),
+    '<span class="hl">' + currentSet.digraph.toUpperCase() + '</span>'
+  );
+  el.innerHTML =
+    '<span class="dh-label">Today\'s digraph:</span>' +
+    '<span class="digraph-showcase">' + currentSet.digraph.toUpperCase() + '</span>' +
+    '<span class="digraph-example">e.g. <span style="font-size:1rem;font-weight:900">' + exHighlight + '</span></span>';
+}
+
+// ── PASSWORD ──
+function showPwModal(){
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-error').textContent = '';
+  document.getElementById('pw-modal').classList.add('show');
+  setTimeout(function(){ document.getElementById('pw-input').focus(); }, 150);
+}
+function closePwModal(){ document.getElementById('pw-modal').classList.remove('show'); }
+function checkPw(){
+  if(document.getElementById('pw-input').value === TEACHER_PW){
+    closePwModal(); renderTeacher(); showScreen('screen-teacher');
+  } else {
+    document.getElementById('pw-error').textContent = 'Incorrect password — try again.';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+}
+
+// ── TEACHER ──
+function renderTeacher(){
+  var list = document.getElementById('teacher-sets-list'); list.innerHTML = '';
+  if(!DIGRAPH_SETS.length){
+    list.innerHTML = '<div style="color:var(--mid);font-size:.83rem;font-weight:600;padding:6px 0">No sets yet!</div>';
+    return;
+  }
+  DIGRAPH_SETS.forEach(function(set, i){
+    var color = PALETTE[i % PALETTE.length];
+    var preview = set.words.slice(0,7).join(', ') + (set.words.length > 7 ? ' …' : '');
+    var row = document.createElement('div'); row.className = 'teacher-set-row';
+    row.innerHTML =
+      '<div class="tsr-badge" style="background:' + color + '">' + set.digraph.toUpperCase() + '</div>' +
+      '<div class="tsr-info">' +
+        '<div class="tsr-name">' + set.label + '</div>' +
+        '<div class="tsr-words">' + set.words.length + ' words: ' + preview + '</div>' +
+      '</div>' +
+      '<div class="tsr-actions">' +
+        '<button class="tsr-btn tsr-edit">✏️ Edit</button>' +
+        '<button class="tsr-btn tsr-del">🗑 Del</button>' +
+      '</div>';
+    row.querySelector('.tsr-edit').addEventListener('click', function(){ editSet(set.id); });
+    row.querySelector('.tsr-del').addEventListener('click', function(){ deleteSet(set.id); });
+    list.appendChild(row);
+  });
+}
+
+function editSet(id){
+  var set = DIGRAPH_SETS.find(function(s){ return s.id === id; }); if(!set) return;
+  editId = id;
+  document.getElementById('t-digraph-input').value = set.digraph;
+  document.getElementById('t-label-input').value = set.label;
+  document.getElementById('t-example-input').value = set.example;
+  document.getElementById('t-words-input').value = set.words.join(', ');
+  document.getElementById('add-panel-title').textContent = '✏️ Editing: ' + set.label;
+  document.getElementById('save-set-btn').textContent = '💾 Save Changes';
+  document.getElementById('cancel-edit-btn').style.display = '';
+  document.getElementById('add-set-panel').scrollIntoView({behavior:'smooth'});
+}
+
+function cancelEdit(){
+  editId = null;
+  ['t-digraph-input','t-label-input','t-example-input','t-words-input'].forEach(function(id){ document.getElementById(id).value = ''; });
+  document.getElementById('add-panel-title').textContent = '➕ Add / Edit Set';
+  document.getElementById('save-set-btn').textContent = '💾 Save Set';
+  document.getElementById('cancel-edit-btn').style.display = 'none';
+}
+
+function saveSet(){
+  var digraph = document.getElementById('t-digraph-input').value.trim().toLowerCase();
+  var label   = document.getElementById('t-label-input').value.trim();
+  var example = document.getElementById('t-example-input').value.trim().toLowerCase();
+  var words   = parseWords(document.getElementById('t-words-input').value);
+  if(!digraph){ alert('Please enter the digraph letters (e.g. oo, ee, ai).'); return; }
+  if(words.length < 2){ alert('Please enter at least 2 words.'); return; }
+  if(!label) label = digraph.toUpperCase();
+  if(!example) example = words[0];
+  if(editId !== null){
+    var set = DIGRAPH_SETS.find(function(s){ return s.id === editId; });
+    if(set){ set.digraph=digraph; set.label=label; set.example=example; set.words=words; }
+    cancelEdit();
+  } else {
+    DIGRAPH_SETS.push({id: Date.now(), digraph:digraph, label:label, example:example, words:words});
+  }
+  renderTeacher();
+  renderHome();
+}
+
+function deleteSet(id){
+  if(!confirm('Delete this set?')) return;
+  DIGRAPH_SETS = DIGRAPH_SETS.filter(function(s){ return s.id !== id; });
+  renderTeacher(); renderHome();
+}
+
+function downloadGame(){
+  var setsJson = JSON.stringify(DIGRAPH_SETS, null, 2);
+  var html = document.documentElement.outerHTML;
+  var updated = html.replace(/var DIGRAPH_SETS = \[[\s\S]*?\];/, 'var DIGRAPH_SETS = ' + setsJson + ';');
+  // Always open on home screen
+  updated = updated.replace(/<div class="screen active" id="/g, '<div class="screen" id="');
+  updated = updated.replace(/<div class="screen trans-screen active" id="/g, '<div class="screen trans-screen" id="');
+  updated = updated.replace('<div class="screen" id="screen-home"', '<div class="screen active" id="screen-home"');
+  var blob = new Blob([updated], {type:'text/html'});
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'digraph-spelling-game.html'; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+}
+
+// ── SPEECH ──
+function speakWord(word, btnId){
+  synth.cancel();
+  var btn = btnId ? document.getElementById(btnId) : null;
+  if(btn) btn.classList.add('play-btn-speaking');
+  var u = new SpeechSynthesisUtterance(word);
+  u.rate = speechRate; u.pitch = 0.95; u.volume = 1.0;
+  var vv = synth.getVoices();
+  var best = vv.find(function(v){ return v.lang.startsWith('en') && (v.name.includes('Google')||v.name.includes('Natural')||v.name.includes('Premium')||v.name.includes('Enhanced')); }) || vv.find(function(v){ return v.lang.startsWith('en'); });
+  if(best) u.voice = best;
+  u.onend = u.onerror = function(){ if(btn) btn.classList.remove('play-btn-speaking'); l2Playing=false; l3Playing=false; l4Playing=false; };
+  synth.speak(u);
+}
+function speakAudioBtn(word, btn){
+  synth.cancel();
+  var u = new SpeechSynthesisUtterance(word);
+  u.rate = speechRate; u.pitch = 0.95; u.volume = 1.0;
+  var vv = synth.getVoices();
+  var best = vv.find(function(v){ return v.lang.startsWith('en') && (v.name.includes('Google')||v.name.includes('Natural')||v.name.includes('Premium')||v.name.includes('Enhanced')); }) || vv.find(function(v){ return v.lang.startsWith('en'); });
+  if(best) u.voice = best;
+  btn.classList.add('speaking'); activeSpeakingEl = btn;
+  u.onend = u.onerror = function(){ btn.classList.remove('speaking'); activeSpeakingEl = null; };
+  synth.speak(u);
+}
+function setSpeed(rate, pfx){
+  speechRate = rate;
+  document.getElementById(pfx+'-speed-slider').value = rate;
+  document.getElementById(pfx+'-speed-display').textContent = rate.toFixed(1)+'×';
+  var scrMap = {l1:'screen-level1',l2:'screen-level2',l3:'screen-level3',l4:'screen-level4'};
+  document.getElementById(scrMap[pfx]).querySelectorAll('.speed-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById(pfx+'-btn-slow').classList.toggle('active', rate===.5);
+  document.getElementById(pfx+'-btn-clear').classList.toggle('active', rate===.7);
+  document.getElementById(pfx+'-btn-normal').classList.toggle('active', rate===1);
+}
+function onSliderChange(val, pfx){
+  speechRate = parseFloat(val);
+  document.getElementById(pfx+'-speed-display').textContent = parseFloat(val).toFixed(2)+'×';
+  var scrMap = {l1:'screen-level1',l2:'screen-level2',l3:'screen-level3',l4:'screen-level4'};
+  document.getElementById(scrMap[pfx]).querySelectorAll('.speed-btn').forEach(function(b){ b.classList.remove('active'); });
+}
+
+// ── UTILS ──
+function shuffle(arr){ var a=arr.slice(),i=a.length,j,t; while(i--){j=Math.floor(Math.random()*(i+1));t=a[i];a[i]=a[j];a[j]=t;} return a; }
+function parseWords(raw){ var seen={},out=[]; raw.split(/[\n,]+/).forEach(function(w){ w=w.trim().toLowerCase(); if(w&&!seen[w]){seen[w]=1;out.push(w);} }); return out.slice(0,12); }
+function spawnEmoji(emoji,el){ var r=el.getBoundingClientRect(),s=document.createElement('span'); s.className='float-emoji'; s.textContent=emoji; s.style.left=(r.left+r.width/2-16)+'px'; s.style.top=r.top+'px'; document.body.appendChild(s); setTimeout(function(){s.remove();},900); }
+function launchConfetti(){ var c=['#ff4757','#4ecdc4','#ffd32a','#ff6eb4','#2ed573','#1e90ff']; for(var i=0;i<80;i++){(function(){ var p=document.createElement('div'); p.className='confetti-piece'; p.style.left=Math.random()*100+'vw'; p.style.top='-20px'; p.style.background=c[Math.floor(Math.random()*c.length)]; p.style.animationDuration=(Math.random()*2+1.5)+'s'; p.style.animationDelay=(Math.random()*.8)+'s'; p.style.width=(Math.random()*8+6)+'px'; p.style.height=p.style.width; document.body.appendChild(p); setTimeout(function(){p.remove();},4000); })();} }
+
+// ══════════════════════════════════
+// LEVEL 1 — LISTEN & MATCH
+// ══════════════════════════════════
+function buildLevel1(){
+  l1Matched=0; l1Misses=0;
+  document.getElementById('l1-matched').textContent=0;
+  document.getElementById('l1-total').textContent=currentWords.length;
+  document.getElementById('l1-misses').textContent=0;
+  document.getElementById('l1-acc').textContent='—';
+  document.getElementById('l1-hint').textContent=currentWords.length+' words to match';
+  var ag=document.getElementById('l1-audio-grid'); ag.innerHTML='';
+  var wg=document.getElementById('l1-words-grid'); wg.innerHTML='';
+
+  shuffle(currentWords).forEach(function(word, i){
+    var color = PALETTE[i % PALETTE.length];
+    var btn = document.createElement('div');
+    btn.className='audio-btn'; btn.dataset.word=word; btn.style.background=color;
+    btn.innerHTML='<div class="matched-tag">✓</div><span class="speaker-icon">🔊</span><span class="btn-sublabel">Tap to hear</span>';
+    btn.addEventListener('click', function(){ if(!btn.classList.contains('matched')) speakAudioBtn(word, btn); });
+    btn.addEventListener('dragover', function(e){ e.preventDefault(); btn.classList.add('drag-over'); });
+    btn.addEventListener('dragleave', function(){ btn.classList.remove('drag-over'); });
+    btn.addEventListener('drop', function(e){ e.preventDefault(); btn.classList.remove('drag-over'); l1Drop(btn); });
+    ag.appendChild(btn);
+  });
+
+  shuffle(currentWords).forEach(function(word){
+    var card = document.createElement('div');
+    card.className='word-card'; card.textContent=word; card.draggable=true; card.dataset.word=word;
+    card.addEventListener('dragstart', function(){ l1DragWord=word; setTimeout(function(){ card.classList.add('dragging'); },0); });
+    card.addEventListener('dragend', function(){ card.classList.remove('dragging'); });
+    var clone=null;
+    card.addEventListener('touchstart', function(e){
+      l1DragWord=word; var t=e.touches[0];
+      clone=card.cloneNode(true);
+      clone.style.cssText='position:fixed;z-index:999;pointer-events:none;opacity:.85;top:'+(t.clientY-25)+'px;left:'+(t.clientX-60)+'px;transform:rotate(-2deg) scale(1.05);transition:none;';
+      document.body.appendChild(clone); card.classList.add('dragging');
+    },{passive:true});
+    card.addEventListener('touchmove', function(e){
+      e.preventDefault(); var t=e.touches[0];
+      if(clone){ clone.style.top=(t.clientY-25)+'px'; clone.style.left=(t.clientX-60)+'px'; }
+    },{passive:false});
+    card.addEventListener('touchend', function(e){
+      card.classList.remove('dragging'); if(clone){ clone.remove(); clone=null; }
+      var t=e.changedTouches[0];
+      var el=document.elementFromPoint(t.clientX,t.clientY);
+      var target=el&&el.closest&&el.closest('.audio-btn');
+      if(target) l1Drop(target);
+    });
+    wg.appendChild(card);
+  });
+}
+
+function l1Drop(btn){
+  if(!l1DragWord) return;
+  var correct = btn.dataset.word;
+  if(l1DragWord === correct){
+    btn.classList.add('correct','matched');
+    var cards=document.querySelectorAll('#l1-words-grid .word-card');
+    for(var i=0;i<cards.length;i++){ if(cards[i].dataset.word===l1DragWord&&!cards[i].classList.contains('matched')){ cards[i].classList.add('matched'); break; } }
+    spawnEmoji('⭐',btn); l1Matched++; l1HUD(); speakAudioBtn(l1DragWord,btn);
+    setTimeout(function(){
+      btn.classList.remove('correct');
+      var rem=currentWords.length-l1Matched;
+      document.getElementById('l1-hint').textContent=rem>0?rem+' word'+(rem!==1?'s':'')+' left':'';
+      if(l1Matched===currentWords.length) l1Result();
+    },500);
+  } else {
+    btn.classList.add('wrong'); spawnEmoji('💥',btn); l1Misses++; l1HUD();
+    setTimeout(function(){ btn.classList.remove('wrong'); },400);
+    speakAudioBtn(correct,btn);
+  }
+  l1DragWord=null;
+}
+function l1HUD(){
+  document.getElementById('l1-matched').textContent=l1Matched;
+  document.getElementById('l1-misses').textContent=l1Misses;
+  var t=l1Matched+l1Misses;
+  document.getElementById('l1-acc').textContent=t>0?Math.round(l1Matched/t*100)+'%':'—';
+}
+function l1Result(){
+  var perfect=l1Misses===0, acc=Math.round(l1Matched/(l1Matched+l1Misses)*100);
+  document.getElementById('l1-r-emoji').textContent=perfect?'🏆':acc>=70?'🎉':'💪';
+  document.getElementById('l1-r-title').textContent=perfect?'Perfect!':acc>=70?'Well Done!':'Keep Going!';
+  document.getElementById('l1-r-msg').textContent=l1Matched+' matched · '+l1Misses+' mistake'+(l1Misses!==1?'s':'')+' · '+acc+'% accuracy';
+  document.getElementById('l1-r-hint').style.display=perfect?'block':'none';
+  document.getElementById('l1-r-next').style.display=perfect?'block':'none';
+  if(perfect) launchConfetti();
+  document.getElementById('l1-result').classList.add('show');
+}
+function goTransition(){ closeResult('l1-result'); showScreen('screen-transition'); launchConfetti(); }
+
+// ══════════════════════════════════
+// LEVEL 2 — DRAG CHUNKS INTO ORDER
+// ══════════════════════════════════
+function startLevel2(){ buildLevel2(); showScreen('screen-level2'); }
+function buildLevel2(){
+  l2Words=shuffle(currentWords.slice()); l2Idx=0; l2Mistakes=0; l2Score=0;
+  document.getElementById('l2-total').textContent=l2Words.length;
+  l2HUD(); l2Load();
+}
+function l2Load(){
+  if(l2Idx>=l2Words.length){ l2Result(); return; }
+  l2Word=l2Words[l2Idx]; l2WordMistakes=0; l2Playing=false;
+  l2Chunks = chunkWord(l2Word, currentSet.digraph);
+  // Shuffled source pool — each chunk gets a unique index
+  var indices = l2Chunks.map(function(_,i){ return i; });
+  var shuffled = shuffle(indices);
+  // Ensure not already in correct order
+  var attempts=0;
+  while(shuffled.join(',')===indices.join(',')&&attempts<10){ shuffled=shuffle(indices); attempts++; }
+  l2AnswerArr = new Array(l2Chunks.length).fill(null);
+
+  // Store the shuffle order on l2 state
+  l2ShuffledPool = shuffled; // pool positions -> chunk index
+
+  document.getElementById('l2-counter').textContent='Word '+(l2Idx+1)+' of '+l2Words.length;
+  document.getElementById('l2-bar').style.width=(l2Idx/l2Words.length*100)+'%';
+  document.getElementById('l2-play-label').textContent='Hear the word';
+  document.getElementById('l2-feedback').textContent='';
+  document.getElementById('l2-feedback').className='lx-feedback';
+  l2Render(); l2CheckBtn();
+  setTimeout(l2PlayWord, 400);
+}
+var l2ShuffledPool = [];
+
+function l2PlayWord(){ if(l2Playing)return; l2Playing=true; speakWord(l2Word,'l2-play-btn'); }
+
+function l2Render(){
+  var src=document.getElementById('l2-source'); src.innerHTML='';
+  var ans=document.getElementById('l2-answer'); ans.innerHTML='';
+
+  // Source: show shuffled chunks
+  l2ShuffledPool.forEach(function(chunkIdx, poolPos){
+    var chunk = l2Chunks[chunkIdx];
+    var tile = document.createElement('div');
+    tile.className = 'chunk-tile chunk-source ' + (chunk.isDigraph ? 'is-digraph' : 'is-letter');
+    tile.textContent = chunk.text.toUpperCase();
+    tile.dataset.poolPos = poolPos;
+    tile.dataset.chunkIdx = chunkIdx;
+    if(l2AnswerArr.indexOf(poolPos) !== -1){ tile.classList.add('ch-used'); }
+    tile.draggable = true;
+    tile.addEventListener('dragstart', function(e){
+      if(tile.classList.contains('ch-used')) return;
+      e.dataTransfer.setData('poolPos', poolPos);
+      setTimeout(function(){ tile.classList.add('ch-dragging'); },0);
+    });
+    tile.addEventListener('dragend', function(){ tile.classList.remove('ch-dragging'); });
+    // touch
+    var tClone=null;
+    tile.addEventListener('touchstart', function(e){
+      if(tile.classList.contains('ch-used')) return;
+      var t=e.touches[0];
+      tClone=tile.cloneNode(true);
+      tClone.style.cssText='position:fixed;z-index:999;pointer-events:none;opacity:.85;top:'+(t.clientY-30)+'px;left:'+(t.clientX-26)+'px;transition:none;';
+      document.body.appendChild(tClone); tile.classList.add('ch-dragging');
+    },{passive:true});
+    tile.addEventListener('touchmove', function(e){
+      e.preventDefault(); var t=e.touches[0];
+      if(tClone){ tClone.style.top=(t.clientY-30)+'px'; tClone.style.left=(t.clientX-26)+'px'; }
+    },{passive:false});
+    tile.addEventListener('touchend', function(e){
+      tile.classList.remove('ch-dragging'); if(tClone){ tClone.remove(); tClone=null; }
+      var t=e.changedTouches[0];
+      var el=document.elementFromPoint(t.clientX,t.clientY);
+      var slot=el&&el.closest&&el.closest('.ch-slot-el');
+      if(slot&&!slot.classList.contains('ch-filled')){ l2PlaceInSlot(poolPos, parseInt(slot.dataset.slotIdx)); }
+    });
+    src.appendChild(tile);
+  });
+
+  // Answer slots
+  l2Chunks.forEach(function(chunk, slotIdx){
+    var slot = document.createElement('div');
+    slot.className = 'chunk-tile chunk-slot ch-slot-el ' + (chunk.isDigraph ? 'is-digraph-slot' : '');
+    slot.dataset.slotIdx = slotIdx;
+    var filledPoolPos = l2AnswerArr[slotIdx];
+    if(filledPoolPos !== null){
+      var filledChunk = l2Chunks[l2ShuffledPool[filledPoolPos]];
+      slot.classList.add('ch-filled');
+      if(filledChunk.isDigraph) slot.classList.add('is-digraph-slot');
+      slot.textContent = filledChunk.text.toUpperCase();
+      (function(si){ slot.addEventListener('click', function(){ l2ReturnFromSlot(si); }); })(slotIdx);
+    }
+    slot.addEventListener('dragover', function(e){
+      e.preventDefault(); if(!this.classList.contains('ch-filled')) this.classList.add('ch-over');
+    });
+    slot.addEventListener('dragleave', function(){ this.classList.remove('ch-over'); });
+    slot.addEventListener('drop', function(e){
+      e.preventDefault(); this.classList.remove('ch-over');
+      if(this.classList.contains('ch-filled')) return;
+      var pp = parseInt(e.dataTransfer.getData('poolPos'));
+      l2PlaceInSlot(pp, parseInt(this.dataset.slotIdx));
+    });
+    ans.appendChild(slot);
+  });
+}
+function l2PlaceInSlot(poolPos, slotIdx){
+  if(l2AnswerArr[slotIdx]!==null) return;
+  if(l2AnswerArr.indexOf(poolPos)!==-1) return;
+  l2AnswerArr[slotIdx]=poolPos; l2Render(); l2CheckBtn();
+}
+function l2ReturnFromSlot(slotIdx){ l2AnswerArr[slotIdx]=null; l2Render(); l2CheckBtn(); }
+function l2Clear(){ l2AnswerArr=new Array(l2Chunks.length).fill(null); document.getElementById('l2-feedback').textContent=''; l2Render(); l2CheckBtn(); }
+function l2CheckBtn(){ document.getElementById('l2-check-btn').disabled=!l2AnswerArr.every(function(v){return v!==null;}); }
+function l2Check(){
+  var attempt = l2AnswerArr.map(function(pp){ return l2Chunks[l2ShuffledPool[pp]].text; }).join('');
+  var slots = document.getElementById('l2-answer').querySelectorAll('.ch-slot-el');
+  var fb = document.getElementById('l2-feedback');
+  if(attempt === l2Word){
+    slots.forEach(function(s){ s.classList.add('ch-correct'); s.classList.remove('ch-filled'); });
+    fb.textContent='✅ Correct! Well done!'; fb.className='lx-feedback fb-correct';
+    l2Score+=Math.max(10-l2WordMistakes*2,2); l2Idx++; l2HUD();
+    spawnEmoji('⭐', document.getElementById('l2-answer'));
+    setTimeout(l2Load, 1200);
+  } else {
+    slots.forEach(function(s){ s.classList.add('ch-wrong'); s.classList.remove('ch-filled'); });
+    fb.textContent='❌ Not quite — try again!'; fb.className='lx-feedback fb-wrong';
+    l2WordMistakes++; l2Mistakes++; l2HUD();
+    setTimeout(function(){
+      slots.forEach(function(s){ s.classList.remove('ch-wrong'); if(l2AnswerArr[s.dataset.slotIdx]!==null) s.classList.add('ch-filled'); });
+      l2Clear(); l2PlayWord();
+    },800);
+  }
+}
+function l2HUD(){ document.getElementById('l2-done').textContent=l2Idx; document.getElementById('l2-mistakes').textContent=l2Mistakes; document.getElementById('l2-score').textContent=l2Score; }
+function l2Result(){
+  document.getElementById('l2-bar').style.width='100%';
+  var perfect=l2Mistakes===0;
+  document.getElementById('l2-r-emoji').textContent=perfect?'🏆':l2Score>=l2Words.length*6?'🎉':'💪';
+  document.getElementById('l2-r-title').textContent=perfect?'Unscrambled!':l2Score>=l2Words.length*6?'Great Work!':'Keep Going!';
+  document.getElementById('l2-r-msg').textContent='Score: '+l2Score+' · Mistakes: '+l2Mistakes+' · All '+l2Words.length+' words done!';
+  if(perfect) launchConfetti();
+  document.getElementById('l2-result').classList.add('show');
+}
+
+// ══════════════════════════════════
+// LEVEL 3 — CLICK CHUNKS TO SPELL
+// ══════════════════════════════════
+function startLevel3(){ buildLevel3(); showScreen('screen-level3'); }
+function buildLevel3(){
+  l3Words=shuffle(currentWords.slice()); l3Idx=0; l3Mistakes=0; l3Score=0;
+  document.getElementById('l3-total').textContent=l3Words.length;
+  l3HUD(); l3Load();
+}
+function l3Load(){
+  if(l3Idx>=l3Words.length){ l3Result(); return; }
+  l3Word=l3Words[l3Idx]; l3Entered=[]; l3WordMistakes=0; l3Playing=false;
+  l3Chunks = chunkWord(l3Word, currentSet.digraph);
+  // Bank: shuffled chunks + a couple of decoy single letters
+  var bankChunks = l3Chunks.slice();
+  var alpha='abcdefghijklmnopqrstuvwxyz', decoys=[], usedLetters=l3Word.split('');
+  var nd = Math.min(2, Math.max(0, 7-bankChunks.length));
+  while(decoys.length<nd){ var d=alpha[Math.floor(Math.random()*26)]; if(!usedLetters.includes(d)&&!decoys.includes(d)) decoys.push(d); }
+  decoys.forEach(function(d){ bankChunks.push({text:d,isDigraph:false}); });
+  l3BankPool = shuffle(bankChunks);
+
+  document.getElementById('l3-counter').textContent='Word '+(l3Idx+1)+' of '+l3Words.length;
+  document.getElementById('l3-bar').style.width=(l3Idx/l3Words.length*100)+'%';
+  document.getElementById('l3-play-label').textContent='Hear the word';
+  document.getElementById('l3-feedback').textContent=''; document.getElementById('l3-feedback').className='lx-feedback';
+  l3RenderAnswer(); l3RenderBank(); l3CheckBtn();
+  setTimeout(l3PlayWord, 400);
+}
+var l3BankPool = [];
+
+function l3PlayWord(){ if(l3Playing)return; l3Playing=true; speakWord(l3Word,'l3-play-btn'); }
+
+function l3RenderAnswer(){
+  var ans=document.getElementById('l3-answer'); ans.innerHTML='';
+  // Show placed chunks as filled slots, remaining as empty slots
+  var placed = l3Entered.length;
+  l3Chunks.forEach(function(chunk, i){
+    var slot = document.createElement('div');
+    var isPlaced = i < placed;
+    if(isPlaced){
+      var placedChunk = l3Entered[i];
+      slot.className = 'chunk-tile chunk-slot ch-filled ' + (placedChunk.isDigraph ? 'is-digraph-slot' : '');
+      slot.textContent = placedChunk.text.toUpperCase();
+      // click last filled to remove
+      if(i === placed-1){
+        slot.style.cursor='pointer';
+        slot.addEventListener('click', function(){ l3RemoveLast(); });
+      }
+    } else {
+      slot.className = 'chunk-tile chunk-slot ' + (chunk.isDigraph ? 'is-digraph-slot' : '');
+    }
+    ans.appendChild(slot);
+  });
+}
+
+function l3RenderBank(){
+  var bank=document.getElementById('l3-bank'); bank.innerHTML='';
+  // Count how many of each chunk text are already in l3Entered
+  var usedMap={};
+  l3Entered.forEach(function(c){ var k=c.text; usedMap[k]=(usedMap[k]||0)+1; });
+  var tileUsed={};
+  l3BankPool.forEach(function(chunk, idx){
+    var tile = document.createElement('div');
+    tile.className = 'chunk-tile chunk-source ' + (chunk.isDigraph ? 'is-digraph' : 'is-letter');
+    tile.textContent = chunk.text.toUpperCase();
+    // Grey out if already used
+    var k = chunk.text;
+    if(!tileUsed[k]) tileUsed[k]=0;
+    if(usedMap[k] && tileUsed[k] < usedMap[k]){
+      tile.classList.add('ch-used'); tileUsed[k]++;
+    } else {
+      tileUsed[k] = (tileUsed[k]||0);
+      tile.addEventListener('click', function(){ l3AddChunk(chunk); });
+    }
+    bank.appendChild(tile);
+  });
+}
+
+function l3AddChunk(chunk){
+  if(l3Entered.length >= l3Chunks.length) return;
+  l3Entered.push(chunk); l3RenderAnswer(); l3RenderBank(); l3CheckBtn();
+}
+function l3RemoveLast(){
+  if(!l3Entered.length) return;
+  l3Entered.pop(); l3RenderAnswer(); l3RenderBank(); l3CheckBtn();
+}
+function l3Clear(){ l3Entered=[]; l3RenderAnswer(); l3RenderBank(); l3CheckBtn(); document.getElementById('l3-feedback').textContent=''; }
+function l3CheckBtn(){ document.getElementById('l3-check-btn').disabled=l3Entered.length<l3Chunks.length; }
+function l3Check(){
+  var attempt = l3Entered.map(function(c){ return c.text; }).join('');
+  var slots = document.getElementById('l3-answer').querySelectorAll('.chunk-tile');
+  var fb = document.getElementById('l3-feedback');
+  if(attempt === l3Word){
+    slots.forEach(function(s){ s.classList.add('ch-correct'); s.classList.remove('ch-filled'); });
+    fb.textContent='✅ Correct! Well done!'; fb.className='lx-feedback fb-correct';
+    l3Score+=Math.max(10-l3WordMistakes*2,2); l3Idx++; l3HUD();
+    spawnEmoji('⭐', document.getElementById('l3-answer'));
+    setTimeout(l3Load, 1200);
+  } else {
+    slots.forEach(function(s){ s.classList.add('ch-wrong'); });
+    fb.textContent='❌ Not quite — try again!'; fb.className='lx-feedback fb-wrong';
+    l3WordMistakes++; l3Mistakes++; l3HUD();
+    setTimeout(function(){ slots.forEach(function(s){ s.classList.remove('ch-wrong'); }); l3Clear(); l3PlayWord(); },800);
+  }
+}
+function l3HUD(){ document.getElementById('l3-done').textContent=l3Idx; document.getElementById('l3-mistakes').textContent=l3Mistakes; document.getElementById('l3-score').textContent=l3Score; }
+function l3Result(){
+  document.getElementById('l3-bar').style.width='100%';
+  var perfect=l3Mistakes===0;
+  document.getElementById('l3-r-emoji').textContent=perfect?'🏆':l3Score>=l3Words.length*6?'🎉':'💪';
+  document.getElementById('l3-r-title').textContent=perfect?'Brilliant!':l3Score>=l3Words.length*6?'Great Work!':'Keep Going!';
+  document.getElementById('l3-r-msg').textContent='Score: '+l3Score+' · Mistakes: '+l3Mistakes+' · All '+l3Words.length+' words done!';
+  if(perfect) launchConfetti();
+  document.getElementById('l3-result').classList.add('show');
+}
+
+// ══════════════════════════════════
+// LEVEL 4 — CLICK SINGLE LETTERS
+// ══════════════════════════════════
+function startLevel4(){ buildLevel4(); showScreen('screen-level4'); }
+function buildLevel4(){
+  l4Words=shuffle(currentWords.slice()); l4Idx=0; l4Mistakes=0; l4Score=0;
+  document.getElementById('l4-total').textContent=l4Words.length;
+  l4HUD(); l4Load();
+}
+function l4Load(){
+  if(l4Idx>=l4Words.length){ l4Result(); return; }
+  l4Word=l4Words[l4Idx]; l4Entered=[]; l4WordMistakes=0; l4Playing=false;
+  // Single letters only — no digraph chunking
+  var letters = l4Word.split('');
+  var alpha='abcdefghijklmnopqrstuvwxyz', decoys=[];
+  var nd=Math.min(3,Math.max(0,8-letters.length));
+  while(decoys.length<nd){ var d=alpha[Math.floor(Math.random()*26)]; if(!letters.includes(d)&&!decoys.includes(d)) decoys.push(d); }
+  l4Pool = shuffle(letters.concat(decoys));
+
+  document.getElementById('l4-counter').textContent='Word '+(l4Idx+1)+' of '+l4Words.length;
+  document.getElementById('l4-bar').style.width=(l4Idx/l4Words.length*100)+'%';
+  document.getElementById('l4-play-label').textContent='Hear the word';
+  document.getElementById('l4-feedback').textContent=''; document.getElementById('l4-feedback').className='lx-feedback';
+  l4Render(); l4BankRender(); l4CheckBtn();
+  setTimeout(l4PlayWord, 400);
+}
+function l4PlayWord(){ if(l4Playing)return; l4Playing=true; speakWord(l4Word,'l4-play-btn'); }
+function l4Render(){
+  var d=document.getElementById('l4-display'); d.innerHTML='';
+  for(var i=0;i<l4Word.length;i++){
+    var s=document.createElement('div');
+    s.className='l4-slot'+(l4Entered[i]?' filled':'');
+    s.textContent=l4Entered[i]?l4Entered[i].toUpperCase():'';
+    s.dataset.index=i;
+    if(l4Entered[i])(function(idx){s.addEventListener('click',function(){l4Remove(idx);});})(i);
+    d.appendChild(s);
+  }
+}
+function l4BankRender(){
+  var bank=document.getElementById('l4-bank'); bank.innerHTML='';
+  var usedCopy=l4Entered.filter(Boolean).slice();
+  var tileMap={};
+  l4Pool.forEach(function(letter){
+    var t=document.createElement('div');
+    t.className='letter-tile'; t.textContent=letter.toUpperCase(); t.dataset.letter=letter;
+    t.addEventListener('click',function(){l4Add(letter);});
+    bank.appendChild(t);
+    if(!tileMap[letter]) tileMap[letter]=[];
+    tileMap[letter].push(t);
+  });
+  usedCopy.forEach(function(letter){
+    if(tileMap[letter]&&tileMap[letter].length>0) tileMap[letter].shift().classList.add('used');
+  });
+}
+function l4Add(letter){ if(l4Entered.filter(Boolean).length>=l4Word.length)return; l4Entered.push(letter); l4Render(); l4BankRender(); l4CheckBtn(); }
+function l4Remove(idx){ var last=l4Entered.filter(Boolean).length-1; if(idx!==last)return; l4Entered.splice(idx,1); l4Render(); l4BankRender(); l4CheckBtn(); }
+function l4Clear(){ l4Entered=[]; l4Render(); l4BankRender(); l4CheckBtn(); document.getElementById('l4-feedback').textContent=''; }
+function l4CheckBtn(){ document.getElementById('l4-check-btn').disabled=l4Entered.filter(Boolean).length<l4Word.length; }
+function l4Check(){
+  var attempt=l4Entered.join('');
+  var slots=document.getElementById('l4-display').querySelectorAll('.l4-slot');
+  var fb=document.getElementById('l4-feedback');
+  if(attempt===l4Word){
+    slots.forEach(function(s){ s.classList.add('correct-slot'); s.classList.remove('filled'); });
+    fb.textContent='✅ Correct! Well done!'; fb.className='lx-feedback fb-correct';
+    l4Score+=Math.max(10-l4WordMistakes*2,2); l4Idx++; l4HUD();
+    spawnEmoji('⭐',document.getElementById('l4-display'));
+    setTimeout(l4Load,1200);
+  } else {
+    slots.forEach(function(s){ s.classList.add('wrong-slot'); s.classList.remove('filled'); });
+    fb.textContent='❌ Not quite — try again!'; fb.className='lx-feedback fb-wrong';
+    l4WordMistakes++; l4Mistakes++; l4HUD();
+    setTimeout(function(){
+      slots.forEach(function(s){ s.classList.remove('wrong-slot'); if(l4Entered[s.dataset.index]) s.classList.add('filled'); });
+      l4Clear(); l4PlayWord();
+    },800);
+  }
+}
+function l4HUD(){ document.getElementById('l4-done').textContent=l4Idx; document.getElementById('l4-mistakes').textContent=l4Mistakes; document.getElementById('l4-score').textContent=l4Score; }
+function l4Result(){
+  document.getElementById('l4-bar').style.width='100%';
+  var perfect=l4Mistakes===0;
+  document.getElementById('l4-r-emoji').textContent=perfect?'🏆':l4Score>=l4Words.length*6?'🎉':'💪';
+  document.getElementById('l4-r-title').textContent=perfect?'Flawless!':l4Score>=l4Words.length*6?'Great Work!':'Keep Practising!';
+  document.getElementById('l4-r-msg').textContent='Score: '+l4Score+' · Mistakes: '+l4Mistakes+' · All '+l4Words.length+' words done!';
+  if(perfect) launchConfetti();
+  document.getElementById('l4-result').classList.add('show');
+}
+
+// ── INIT ──
+synth.onvoiceschanged = function(){ synth.getVoices(); };
+renderHome();
+</script>
+</body>
+</html>

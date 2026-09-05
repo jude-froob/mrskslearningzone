@@ -1,0 +1,1037 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Castle Quest — Place Value Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --night:#0d0b2b;
+  --deep:#1a1650;
+  --purple:#6c3fc5;
+  --gold:#ffd700;
+  --gold2:#ffb300;
+  --pink:#ff6eb4;
+  --teal:#00e5cc;
+  --white:#fff;
+  --cream:#fff9e6;
+  --green:#2ed573;
+  --red:#ff4757;
+  --radius:18px;
+  --shadow:0 6px 0;
+}
+
+body{
+  font-family:'Nunito',sans-serif;
+  background:var(--night);
+  min-height:100vh;
+  overflow-x:hidden;
+  color:var(--white);
+}
+
+/* ── STARFIELD ── */
+.stars{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.star{position:absolute;border-radius:50%;background:#fff;animation:twinkle linear infinite}
+@keyframes twinkle{0%,100%{opacity:.2;transform:scale(1)}50%{opacity:1;transform:scale(1.4)}}
+
+/* ── SCREENS ── */
+.screen{display:none;position:relative;z-index:1;min-height:100vh}
+.screen.active{display:flex;flex-direction:column;align-items:center}
+
+/* ══════════════
+   START SCREEN
+══════════════ */
+#screen-start{
+  justify-content:center;
+  padding:40px 20px;
+  text-align:center;
+  background:radial-gradient(ellipse at 50% 30%,#2a1a6e 0%,var(--night) 70%);
+}
+
+.start-castle{font-size:5rem;margin-bottom:10px;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+
+.game-title{
+  font-family:'Cinzel',serif;
+  font-size:clamp(2rem,7vw,3.5rem);
+  color:var(--gold);
+  text-shadow:0 0 30px rgba(255,215,0,.6),0 3px 0 rgba(0,0,0,.5);
+  line-height:1.1;
+  margin-bottom:8px;
+}
+.game-subtitle{
+  font-size:1.1rem;
+  color:#c8c0ff;
+  font-weight:700;
+  margin-bottom:30px;
+}
+
+.start-card{
+  background:rgba(255,255,255,.08);
+  border:2px solid rgba(255,215,0,.3);
+  border-radius:24px;
+  padding:28px 32px;
+  max-width:420px;
+  width:100%;
+  margin-bottom:28px;
+  backdrop-filter:blur(10px);
+}
+.start-card p{font-size:1rem;line-height:1.7;color:#d0c8ff;font-weight:700}
+.start-card .highlight{color:var(--gold);font-weight:900}
+
+.btn-start{
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:var(--night);
+  border:none;
+  border-radius:50px;
+  padding:16px 48px;
+  font-family:'Cinzel',serif;
+  font-size:1.3rem;
+  font-weight:700;
+  cursor:pointer;
+  box-shadow:0 6px 0 rgba(0,0,0,.4),0 0 30px rgba(255,215,0,.4);
+  transition:transform .15s,box-shadow .15s;
+  letter-spacing:1px;
+}
+.btn-start:hover{transform:translateY(-3px);box-shadow:0 9px 0 rgba(0,0,0,.4),0 0 40px rgba(255,215,0,.5)}
+.btn-start:active{transform:translateY(0);box-shadow:0 3px 0 rgba(0,0,0,.4)}
+
+/* ══════════════
+   GAME SCREEN
+══════════════ */
+#screen-game{
+  padding:0;
+  justify-content:flex-start;
+  background:radial-gradient(ellipse at 50% 0%,#2a1a6e 0%,var(--night) 60%);
+}
+
+/* Top HUD */
+.hud{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  width:100%;
+  padding:12px 18px;
+  background:rgba(0,0,0,.4);
+  border-bottom:2px solid rgba(255,215,0,.2);
+  flex-wrap:wrap;
+  gap:8px;
+}
+.hud-badge{
+  background:rgba(255,255,255,.1);
+  border:2px solid rgba(255,215,0,.3);
+  border-radius:50px;
+  padding:5px 14px;
+  font-size:.82rem;
+  font-weight:800;
+  color:var(--gold);
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.hud-badge .val{color:#fff;font-size:.95rem}
+
+/* PATH SECTION */
+.path-section{
+  width:100%;
+  max-width:680px;
+  margin:0 auto;
+  padding:14px 16px 0;
+}
+
+/* The SVG path canvas */
+.path-canvas{
+  width:100%;
+  border-radius:20px;
+  overflow:hidden;
+  border:2px solid rgba(255,215,0,.2);
+  background:linear-gradient(180deg,#1a0f4e 0%,#0d0b2b 100%);
+  display:block;
+}
+
+/* GAME PANEL */
+.game-panel{
+  width:100%;
+  max-width:680px;
+  margin:12px auto 0;
+  padding:0 16px 24px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+/* Number display */
+.number-display{
+  background:rgba(255,255,255,.08);
+  border:3px solid var(--gold);
+  border-radius:var(--radius);
+  padding:14px 20px;
+  text-align:center;
+  box-shadow:0 0 24px rgba(255,215,0,.2);
+}
+.number-display .nd-label{
+  font-size:.78rem;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.8px;
+  color:#a090e0;
+  margin-bottom:4px;
+}
+.number-display .big-number{
+  font-family:'Cinzel',serif;
+  font-size:clamp(2.5rem,10vw,4rem);
+  font-weight:900;
+  color:var(--gold);
+  text-shadow:0 0 20px rgba(255,215,0,.5);
+  line-height:1;
+}
+
+/* Generate button */
+.btn-generate{
+  background:linear-gradient(135deg,var(--purple),#9b59b6);
+  color:#fff;
+  border:2px solid rgba(255,255,255,.2);
+  border-radius:50px;
+  padding:12px 28px;
+  font-family:'Nunito',sans-serif;
+  font-weight:900;
+  font-size:1rem;
+  cursor:pointer;
+  box-shadow:0 5px 0 rgba(0,0,0,.4);
+  transition:transform .12s,box-shadow .12s;
+  width:100%;
+}
+.btn-generate:hover{transform:translateY(-2px);box-shadow:0 7px 0 rgba(0,0,0,.4)}
+.btn-generate:active{transform:translateY(0);box-shadow:0 2px 0 rgba(0,0,0,.4)}
+.btn-generate:disabled{opacity:.4;cursor:default;transform:none}
+
+/* Question box */
+.question-box{
+  background:rgba(108,63,197,.25);
+  border:2px solid rgba(255,255,255,.15);
+  border-radius:var(--radius);
+  padding:14px 18px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap;
+}
+.question-text{
+  flex:1;
+  font-size:1rem;
+  font-weight:800;
+  color:#e0d8ff;
+  line-height:1.4;
+  min-width:180px;
+}
+.question-text .place-highlight{
+  color:var(--gold);
+  font-size:1.1em;
+}
+.btn-replay{
+  background:linear-gradient(135deg,var(--teal),#00b4d8);
+  color:var(--night);
+  border:none;
+  border-radius:50px;
+  padding:8px 18px;
+  font-weight:900;
+  font-size:.88rem;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:transform .12s;
+  flex-shrink:0;
+}
+.btn-replay:hover{transform:scale(1.05)}
+
+/* Answer display */
+.answer-display{
+  background:rgba(0,0,0,.4);
+  border:3px solid rgba(255,255,255,.2);
+  border-radius:14px;
+  padding:12px 20px;
+  text-align:center;
+  font-family:'Cinzel',serif;
+  font-size:2rem;
+  font-weight:700;
+  color:#fff;
+  min-height:64px;
+  letter-spacing:4px;
+  transition:border-color .2s;
+  position:relative;
+}
+.answer-display.has-answer{border-color:var(--gold)}
+.answer-display .cursor{
+  display:inline-block;
+  width:3px;height:2rem;
+  background:var(--gold);
+  vertical-align:middle;
+  margin-left:4px;
+  animation:blink .8s step-end infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* Number pad */
+.numpad{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+}
+.num-btn{
+  background:rgba(255,255,255,.1);
+  border:2px solid rgba(255,255,255,.2);
+  border-radius:14px;
+  color:#fff;
+  font-family:'Cinzel',serif;
+  font-size:1.4rem;
+  font-weight:700;
+  padding:14px 8px;
+  cursor:pointer;
+  transition:all .12s;
+  box-shadow:0 4px 0 rgba(0,0,0,.4);
+  user-select:none;
+}
+.num-btn:hover{background:rgba(255,255,255,.2);transform:translateY(-2px);box-shadow:0 6px 0 rgba(0,0,0,.4)}
+.num-btn:active{transform:translateY(0);box-shadow:0 2px 0 rgba(0,0,0,.4)}
+.num-btn.del-btn{background:rgba(255,71,87,.25);border-color:rgba(255,71,87,.4);font-size:1.1rem}
+.num-btn.del-btn:hover{background:rgba(255,71,87,.4)}
+.num-btn.zero-btn{grid-column:span 1}
+
+/* Submit button */
+.btn-submit{
+  background:linear-gradient(135deg,var(--green),#00b894);
+  color:var(--night);
+  border:none;
+  border-radius:50px;
+  padding:14px;
+  font-family:'Cinzel',serif;
+  font-size:1.1rem;
+  font-weight:700;
+  cursor:pointer;
+  box-shadow:0 5px 0 rgba(0,0,0,.4);
+  transition:transform .12s,box-shadow .12s;
+  width:100%;
+  letter-spacing:.5px;
+}
+.btn-submit:hover{transform:translateY(-2px);box-shadow:0 7px 0 rgba(0,0,0,.4)}
+.btn-submit:active{transform:translateY(0)}
+.btn-submit:disabled{opacity:.35;cursor:default;transform:none}
+
+/* Feedback banner */
+.feedback-banner{
+  border-radius:14px;
+  padding:12px 18px;
+  text-align:center;
+  font-size:1rem;
+  font-weight:900;
+  min-height:48px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  transition:all .3s;
+}
+.feedback-banner.correct{background:rgba(46,213,115,.25);border:2px solid var(--green);color:var(--green)}
+.feedback-banner.wrong{background:rgba(255,71,87,.2);border:2px solid var(--red);color:#ff8a96}
+.feedback-banner.idle{background:transparent;border:2px solid transparent}
+
+/* ══════════════
+   WIN SCREEN
+══════════════ */
+#screen-win{
+  justify-content:center;
+  padding:30px 20px;
+  text-align:center;
+  background:radial-gradient(ellipse at 50% 30%,#3a1a8e 0%,var(--night) 70%);
+}
+
+.win-character{font-size:7rem;margin-bottom:10px;animation:celebrate 1s ease-in-out infinite alternate}
+@keyframes celebrate{from{transform:scale(1) rotate(-5deg)}to{transform:scale(1.15) rotate(5deg)}}
+
+.win-title{
+  font-family:'Cinzel',serif;
+  font-size:clamp(1.8rem,7vw,3rem);
+  color:var(--gold);
+  text-shadow:0 0 30px rgba(255,215,0,.7);
+  margin-bottom:8px;
+}
+.win-subtitle{font-size:1.1rem;color:#c0b8ff;font-weight:700;margin-bottom:6px}
+.win-character-name{
+  font-family:'Cinzel',serif;
+  font-size:1.3rem;
+  color:var(--pink);
+  margin-bottom:20px;
+}
+.win-stats{
+  display:flex;
+  gap:14px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin-bottom:24px;
+}
+.win-stat{
+  background:rgba(255,255,255,.1);
+  border:2px solid rgba(255,215,0,.3);
+  border-radius:14px;
+  padding:12px 20px;
+  min-width:100px;
+}
+.win-stat .ws-val{font-family:'Cinzel',serif;font-size:1.8rem;color:var(--gold);font-weight:700}
+.win-stat .ws-label{font-size:.75rem;color:#a090d0;font-weight:800;text-transform:uppercase;letter-spacing:.5px}
+
+.speech-bubble{
+  background:rgba(255,255,255,.1);
+  border:2px solid rgba(255,215,0,.3);
+  border-radius:20px;
+  padding:18px 24px;
+  max-width:420px;
+  margin:0 auto 24px;
+  font-size:1rem;
+  line-height:1.7;
+  color:#e0d8ff;
+  font-weight:700;
+  position:relative;
+}
+.speech-bubble::before{
+  content:'💬';
+  position:absolute;
+  top:-18px;left:20px;
+  font-size:1.4rem;
+}
+
+.btn-play-again{
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:var(--night);
+  border:none;
+  border-radius:50px;
+  padding:14px 40px;
+  font-family:'Cinzel',serif;
+  font-size:1.2rem;
+  font-weight:700;
+  cursor:pointer;
+  box-shadow:0 6px 0 rgba(0,0,0,.4),0 0 30px rgba(255,215,0,.3);
+  transition:transform .15s,box-shadow .15s;
+}
+.btn-play-again:hover{transform:translateY(-3px);box-shadow:0 9px 0 rgba(0,0,0,.4)}
+
+/* ── ANIMATIONS ── */
+@keyframes popIn{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-7px)}80%{transform:translateX(7px)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+
+.pop-in{animation:popIn .4s cubic-bezier(.175,.885,.32,1.275) both}
+.slide-up{animation:slideUp .3s ease both}
+
+/* confetti */
+.confetti-piece{position:fixed;pointer-events:none;z-index:300;border-radius:2px;animation:confettiFall linear forwards}
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+/* float emoji */
+.float-emoji{position:fixed;font-size:2rem;pointer-events:none;animation:floatUp .9s ease forwards;z-index:200}
+@keyframes floatUp{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-70px) scale(1.4);opacity:0}}
+
+/* path step highlight */
+@keyframes stepGlow{0%,100%{filter:drop-shadow(0 0 4px var(--gold))}50%{filter:drop-shadow(0 0 12px var(--gold))}}
+</style>
+</head>
+<body>
+
+<!-- STARFIELD -->
+<div class="stars" id="stars"></div>
+
+<!-- ══ START SCREEN ══ -->
+<div class="screen active" id="screen-start">
+  <div class="start-castle">🏰</div>
+  <h1 class="game-title">Castle Quest</h1>
+  <p class="game-subtitle">A Place Value Adventure!</p>
+  <div class="start-card">
+    <p>
+      Journey from your <span class="highlight">🏠 cottage</span> to the <span class="highlight">🏰 magical castle</span>!<br><br>
+      Answer <span class="highlight">20 questions</span> about the value of digits in numbers.<br><br>
+      Get it right → move <span class="highlight">forward ✨</span><br>
+      Get it wrong → move <span class="highlight">back 1 space 😬</span>
+    </p>
+  </div>
+  <button class="btn-start" onclick="startGame()">✨ Begin the Quest! ✨</button>
+</div>
+
+<!-- ══ GAME SCREEN ══ -->
+<div class="screen" id="screen-game">
+
+  <!-- HUD -->
+  <div class="hud">
+    <div class="hud-badge">❓ Question <span class="val" id="hud-q">1</span> of 20</div>
+    <div class="hud-badge">📍 Step <span class="val" id="hud-step">0</span> / 20</div>
+    <div class="hud-badge">⭐ Score <span class="val" id="hud-score">0</span></div>
+  </div>
+
+  <!-- PATH -->
+  <div class="path-section">
+    <svg class="path-canvas" id="path-svg" viewBox="0 0 640 280" xmlns="http://www.w3.org/2000/svg">
+
+      <!-- Sky gradient -->
+      <defs>
+        <radialGradient id="skyGrad" cx="50%" cy="0%" r="80%">
+          <stop offset="0%" style="stop-color:#2a1a6e"/>
+          <stop offset="100%" style="stop-color:#0d0b2b"/>
+        </radialGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <rect width="640" height="280" fill="url(#skyGrad)"/>
+
+      <!-- Static stars -->
+      <circle cx="60" cy="20" r="1.5" fill="#fff" opacity=".8"/>
+      <circle cx="120" cy="35" r="1" fill="#fff" opacity=".6"/>
+      <circle cx="200" cy="15" r="2" fill="#ffd700" opacity=".7"/>
+      <circle cx="310" cy="25" r="1.5" fill="#fff" opacity=".5"/>
+      <circle cx="400" cy="10" r="1" fill="#fff" opacity=".8"/>
+      <circle cx="500" cy="30" r="2" fill="#ffd700" opacity=".6"/>
+      <circle cx="580" cy="18" r="1.5" fill="#fff" opacity=".7"/>
+      <circle cx="160" cy="50" r="1" fill="#fff" opacity=".4"/>
+      <circle cx="450" cy="45" r="1.5" fill="#fff" opacity=".5"/>
+      <circle cx="350" cy="55" r="1" fill="#ffd700" opacity=".8"/>
+      <circle cx="80" cy="60" r="1" fill="#fff" opacity=".5"/>
+      <circle cx="600" cy="55" r="1" fill="#fff" opacity=".6"/>
+
+      <!-- Winding path (the road) -->
+      <!-- Path goes: start bottom-left, winds right/left up to castle top-right -->
+      <path id="road-path"
+        d="M 60,240 Q 100,240 140,220 Q 180,200 220,210 Q 260,220 300,200 Q 340,180 380,190 Q 420,200 460,175 Q 500,150 540,160 Q 580,170 600,145"
+        fill="none" stroke="rgba(255,215,0,0.15)" stroke-width="28" stroke-linecap="round"/>
+      <path
+        d="M 60,240 Q 100,240 140,220 Q 180,200 220,210 Q 260,220 300,200 Q 340,180 380,190 Q 420,200 460,175 Q 500,150 540,160 Q 580,170 600,145"
+        fill="none" stroke="rgba(255,215,0,0.08)" stroke-width="34" stroke-linecap="round"/>
+      <!-- Path dashes -->
+      <path
+        d="M 60,240 Q 100,240 140,220 Q 180,200 220,210 Q 260,220 300,200 Q 340,180 380,190 Q 420,200 460,175 Q 500,150 540,160 Q 580,170 600,145"
+        fill="none" stroke="rgba(255,215,0,0.4)" stroke-width="2"
+        stroke-dasharray="6,8" stroke-linecap="round"/>
+
+      <!-- Step dots (20 steps + start) -->
+      <g id="path-dots"></g>
+
+      <!-- House (start) -->
+      <text x="38" y="255" font-size="28" text-anchor="middle">🏠</text>
+
+      <!-- Castle (end) -->
+      <text x="610" y="140" font-size="28" text-anchor="middle">🏰</text>
+
+      <!-- Player token -->
+      <text id="player-token" x="38" y="240" font-size="22" text-anchor="middle"
+        style="transition:all .8s cubic-bezier(.34,1.56,.64,1);filter:drop-shadow(0 0 6px gold)">🧙</text>
+
+    </svg>
+  </div>
+
+  <!-- GAME PANEL -->
+  <div class="game-panel">
+
+    <!-- Number display -->
+    <div class="number-display">
+      <div class="nd-label">Today's number</div>
+      <div class="big-number" id="big-number">—</div>
+    </div>
+
+    <!-- Generate button -->
+    <button class="btn-generate" id="btn-generate" onclick="generateNumber()">
+      ✨ Generate a Number!
+    </button>
+
+    <!-- Question box (hidden until number generated) -->
+    <div class="question-box" id="question-box" style="display:none">
+      <div class="question-text" id="question-text">Loading…</div>
+      <button class="btn-replay" onclick="replayQuestion()">🔊 Hear Again</button>
+    </div>
+
+    <!-- Feedback -->
+    <div class="feedback-banner idle" id="feedback-banner">
+      Press the button to generate a number!
+    </div>
+
+    <!-- Answer display -->
+    <div class="answer-display" id="answer-display">
+      <span id="answer-text"></span><span class="cursor" id="cursor" style="display:none"></span>
+    </div>
+
+    <!-- Numpad -->
+    <div class="numpad" id="numpad" style="opacity:.4;pointer-events:none">
+      <button class="num-btn" onclick="numPress('1')">1</button>
+      <button class="num-btn" onclick="numPress('2')">2</button>
+      <button class="num-btn" onclick="numPress('3')">3</button>
+      <button class="num-btn" onclick="numPress('4')">4</button>
+      <button class="num-btn" onclick="numPress('5')">5</button>
+      <button class="num-btn" onclick="numPress('6')">6</button>
+      <button class="num-btn" onclick="numPress('7')">7</button>
+      <button class="num-btn" onclick="numPress('8')">8</button>
+      <button class="num-btn" onclick="numPress('9')">9</button>
+      <button class="num-btn zero-btn" onclick="numPress('0')">0</button>
+      <button class="num-btn del-btn" onclick="numDelete()">⌫</button>
+      <button class="num-btn" onclick="numPress('00')" style="font-size:1rem">00</button>
+    </div>
+
+    <!-- Submit -->
+    <button class="btn-submit" id="btn-submit" onclick="submitAnswer()" disabled>
+      ✔ Check My Answer!
+    </button>
+
+  </div>
+</div>
+
+<!-- ══ WIN SCREEN ══ -->
+<div class="screen" id="screen-win">
+  <div class="win-character pop-in" id="win-character">🧙‍♂️</div>
+  <h2 class="win-title" id="win-title">You Made It!</h2>
+  <div class="win-subtitle">You reached the Magical Castle!</div>
+  <div class="win-character-name" id="win-char-name">A Wizard appeared!</div>
+  <div class="speech-bubble" id="win-speech"></div>
+  <div class="win-stats">
+    <div class="win-stat"><div class="ws-val" id="ws-score">0</div><div class="ws-label">Score</div></div>
+    <div class="win-stat"><div class="ws-val" id="ws-correct">0</div><div class="ws-label">Correct</div></div>
+    <div class="win-stat"><div class="ws-val" id="ws-wrong">0</div><div class="ws-label">Wrong</div></div>
+  </div>
+  <button class="btn-play-again" onclick="resetGame()">🏠 Play Again!</button>
+</div>
+
+<script>
+// ══════════════════════════════
+// STARS
+// ══════════════════════════════
+(function(){
+  var container = document.getElementById('stars');
+  for(var i=0;i<120;i++){
+    var s=document.createElement('div');
+    s.className='star';
+    var size=Math.random()*3+1;
+    s.style.cssText='width:'+size+'px;height:'+size+'px;left:'+Math.random()*100+'%;top:'+Math.random()*100+'%;animation-duration:'+(Math.random()*4+2)+'s;animation-delay:'+(Math.random()*4)+'s;opacity:'+Math.random();
+    container.appendChild(s);
+  }
+})();
+
+// ══════════════════════════════
+// PATH DOTS — place 20 evenly along the SVG path
+// ══════════════════════════════
+var PATH_DATA = "M 60,240 Q 100,240 140,220 Q 180,200 220,210 Q 260,220 300,200 Q 340,180 380,190 Q 420,200 460,175 Q 500,150 540,160 Q 580,170 600,145";
+var TOTAL_STEPS = 20;
+var dotPositions = []; // [{x,y}]
+
+function buildPathDots(){
+  var svg = document.getElementById('path-svg');
+  var tempPath = document.createElementNS('http://www.w3.org/2000/svg','path');
+  tempPath.setAttribute('d', PATH_DATA);
+  svg.appendChild(tempPath);
+  var len = tempPath.getTotalLength();
+  var dotsGroup = document.getElementById('path-dots');
+
+  dotPositions = [];
+  for(var i=0;i<=TOTAL_STEPS;i++){
+    var frac = i / TOTAL_STEPS;
+    var pt = tempPath.getPointAtLength(frac * len);
+    dotPositions.push({x: pt.x, y: pt.y});
+    if(i > 0 && i < TOTAL_STEPS){
+      var circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      circle.setAttribute('cx', pt.x);
+      circle.setAttribute('cy', pt.y);
+      circle.setAttribute('r', 5);
+      circle.setAttribute('fill', 'rgba(255,215,0,0.3)');
+      circle.setAttribute('stroke', 'rgba(255,215,0,0.6)');
+      circle.setAttribute('stroke-width', '1.5');
+      circle.setAttribute('id', 'dot-'+i);
+      dotsGroup.appendChild(circle);
+    }
+  }
+  svg.removeChild(tempPath);
+  movePlayerTo(0);
+}
+
+function movePlayerTo(step){
+  var clamped = Math.max(0, Math.min(TOTAL_STEPS, step));
+  var pos = dotPositions[clamped];
+  if(!pos) return;
+  var token = document.getElementById('player-token');
+  token.setAttribute('x', pos.x);
+  token.setAttribute('y', pos.y + 4);
+}
+
+function highlightDot(step){
+  // Flash current dot
+  var dot = document.getElementById('dot-'+step);
+  if(!dot) return;
+  dot.style.animation = 'stepGlow 1s ease 3';
+  setTimeout(function(){ dot.style.animation=''; }, 3000);
+}
+
+// ══════════════════════════════
+// GAME STATE
+// ══════════════════════════════
+var state = {
+  step: 0,
+  questionNum: 0,
+  score: 0,
+  correct: 0,
+  wrong: 0,
+  currentNumber: null,
+  currentAnswer: null,
+  currentPlace: null,
+  currentQuestion: '',
+  answerInput: '',
+  waitingForAnswer: false
+};
+
+var synth = window.speechSynthesis;
+var speechRate = 0.8;
+
+// ══════════════════════════════
+// CHARACTERS
+// ══════════════════════════════
+var CHARACTERS = [
+  {
+    emoji: '🧙‍♂️', name: 'Merlin the Wizard',
+    speech: '"Magnificent work, young scholar! Your knowledge of numbers is truly magical. The realm is safe thanks to you!"'
+  },
+  {
+    emoji: '🐉', name: 'Sparky the Friendly Dragon',
+    speech: '"ROOOAR! That means well done, friend! You counted brilliantly — even I can\'t breathe fire as well as you count ones and tens!"'
+  },
+  {
+    emoji: '🧚‍♀️', name: 'Twinkle the Fairy',
+    speech: '"Oh how wonderful! You sparkle just like my wings! Your place value skills are absolutely enchanting!"'
+  },
+  {
+    emoji: '🧝‍♂️', name: 'Finn the Elf',
+    speech: '"By the ancient forest! You\'ve solved every number puzzle! The elves of the Whispering Wood salute you, brave adventurer!"'
+  },
+  {
+    emoji: '⚔️', name: 'Sir Valorian the Knight',
+    speech: '"Hail, brave champion! You have conquered the Castle Quest with honour and skill! The kingdom celebrates your mathematical might!"'
+  }
+];
+
+var winCharacter = null;
+
+// ══════════════════════════════
+// SPEECH
+// ══════════════════════════════
+function speak(text, onDone){
+  synth.cancel();
+  var u = new SpeechSynthesisUtterance(text);
+  u.rate = speechRate;
+  u.pitch = 1.0;
+  u.volume = 1.0;
+  var vv = synth.getVoices();
+  var best = vv.find(function(v){
+    return v.lang.startsWith('en') && (v.name.includes('Google')||v.name.includes('Natural')||v.name.includes('Premium')||v.name.includes('Enhanced'));
+  }) || vv.find(function(v){ return v.lang.startsWith('en'); });
+  if(best) u.voice = best;
+  if(onDone) u.onend = onDone;
+  synth.speak(u);
+}
+
+synth.onvoiceschanged = function(){ synth.getVoices(); };
+
+// ══════════════════════════════
+// SCREENS
+// ══════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ══════════════════════════════
+// START
+// ══════════════════════════════
+function startGame(){
+  buildPathDots();
+  resetState();
+  showScreen('screen-game');
+  setFeedback('idle', '✨ Press the button to generate your first number!');
+}
+
+function resetState(){
+  state.step = 0;
+  state.questionNum = 0;
+  state.score = 0;
+  state.correct = 0;
+  state.wrong = 0;
+  state.currentNumber = null;
+  state.currentAnswer = null;
+  state.currentPlace = null;
+  state.currentQuestion = '';
+  state.answerInput = '';
+  state.waitingForAnswer = false;
+  updateHUD();
+  document.getElementById('big-number').textContent = '—';
+  document.getElementById('question-box').style.display = 'none';
+  document.getElementById('answer-display').className = 'answer-display';
+  document.getElementById('answer-text').textContent = '';
+  document.getElementById('cursor').style.display = 'none';
+  document.getElementById('btn-generate').disabled = false;
+  document.getElementById('btn-submit').disabled = true;
+  disableNumpad(true);
+  movePlayerTo(0);
+}
+
+function resetGame(){
+  showScreen('screen-start');
+}
+
+// ══════════════════════════════
+// GENERATE NUMBER
+// ══════════════════════════════
+function generateNumber(){
+  if(state.waitingForAnswer) return;
+
+  // Generate 1–120
+  var num = Math.floor(Math.random() * 120) + 1;
+  state.currentNumber = num;
+
+  // Pick place value to ask about
+  // Determine which places are present
+  var hundreds = Math.floor(num / 100);
+  var tens = Math.floor((num % 100) / 10);
+  var ones = num % 10;
+
+  var places = ['ones'];
+  if(num >= 10) places.push('tens');
+  if(num >= 100) places.push('hundreds');
+
+  // Weighted: ask hundreds less (rarer), weight towards the digit positions present
+  state.currentPlace = places[Math.floor(Math.random() * places.length)];
+
+  // Calculate correct answer
+  if(state.currentPlace === 'hundreds'){
+    state.currentAnswer = hundreds * 100;
+  } else if(state.currentPlace === 'tens'){
+    state.currentAnswer = tens * 10;
+  } else {
+    state.currentAnswer = ones;
+  }
+
+  // Build question text
+  var placeLabel = state.currentPlace === 'hundreds' ? 'hundreds' :
+                   state.currentPlace === 'tens' ? 'tens' : 'ones';
+  state.currentQuestion = 'In the number ' + num + ', what is the value of the ' + placeLabel + ' digit?';
+
+  // Update UI
+  document.getElementById('big-number').textContent = num;
+  document.getElementById('big-number').style.animation = 'popIn .4s cubic-bezier(.175,.885,.32,1.275) both';
+  setTimeout(function(){ document.getElementById('big-number').style.animation = ''; }, 500);
+
+  // Update question box
+  var placeColour = state.currentPlace === 'hundreds' ? '#ff6eb4' :
+                    state.currentPlace === 'tens' ? '#00e5cc' : '#ffd700';
+  document.getElementById('question-text').innerHTML =
+    'What is the value of the <span class="place-highlight" style="color:'+placeColour+'">'+placeLabel+'</span> digit?';
+  document.getElementById('question-box').style.display = 'flex';
+
+  // Reset answer
+  state.answerInput = '';
+  state.waitingForAnswer = true;
+  updateAnswerDisplay();
+  disableNumpad(false);
+  document.getElementById('btn-generate').disabled = true;
+  document.getElementById('btn-submit').disabled = true;
+  setFeedback('idle', '🎧 Listen to the question…');
+
+  // Increment question counter
+  state.questionNum++;
+  updateHUD();
+
+  // Speak the question
+  setTimeout(function(){ speak(state.currentQuestion); }, 300);
+}
+
+function replayQuestion(){
+  if(state.currentQuestion) speak(state.currentQuestion);
+}
+
+// ══════════════════════════════
+// NUMPAD
+// ══════════════════════════════
+function disableNumpad(off){
+  var numpad = document.getElementById('numpad');
+  numpad.style.opacity = off ? '.4' : '1';
+  numpad.style.pointerEvents = off ? 'none' : 'all';
+}
+
+function numPress(val){
+  if(!state.waitingForAnswer) return;
+  var combined = state.answerInput + val;
+  if(parseInt(combined) > 120) return; // max possible answer
+  if(state.answerInput.length >= 3) return;
+  state.answerInput = combined;
+  updateAnswerDisplay();
+  document.getElementById('btn-submit').disabled = state.answerInput === '';
+}
+
+function numDelete(){
+  if(!state.waitingForAnswer) return;
+  state.answerInput = state.answerInput.slice(0,-1);
+  updateAnswerDisplay();
+  document.getElementById('btn-submit').disabled = state.answerInput === '';
+}
+
+function updateAnswerDisplay(){
+  var disp = document.getElementById('answer-display');
+  var txt = document.getElementById('answer-text');
+  var cursor = document.getElementById('cursor');
+  txt.textContent = state.answerInput;
+  cursor.style.display = state.waitingForAnswer ? 'inline-block' : 'none';
+  disp.className = 'answer-display' + (state.answerInput ? ' has-answer' : '');
+}
+
+// ══════════════════════════════
+// SUBMIT
+// ══════════════════════════════
+function submitAnswer(){
+  if(!state.waitingForAnswer || state.answerInput === '') return;
+  state.waitingForAnswer = false;
+  disableNumpad(true);
+  document.getElementById('btn-submit').disabled = true;
+  document.getElementById('cursor').style.display = 'none';
+
+  var given = parseInt(state.answerInput);
+  var correct = state.currentAnswer;
+
+  if(given === correct){
+    // Correct!
+    state.correct++;
+    state.score += 10;
+    updateHUD();
+    state.step = Math.min(state.step + 1, TOTAL_STEPS);
+    movePlayerTo(state.step);
+    highlightDot(state.step);
+    spawnEmoji('⭐', document.getElementById('btn-submit'));
+    setFeedback('correct', '⭐ Brilliant! That\'s correct! Move forward!');
+    speak('Well done! That is correct! ' + correct + ' is the value of the ' + state.currentPlace + 's digit.');
+
+    setTimeout(function(){
+      if(state.step >= TOTAL_STEPS){
+        showWin();
+      } else {
+        afterQuestion();
+      }
+    }, 1800);
+
+  } else {
+    // Wrong
+    state.wrong++;
+    updateHUD();
+    state.step = Math.max(state.step - 1, 0);
+    movePlayerTo(state.step);
+    setFeedback('wrong', '😬 Not quite! Move back 1 space. The answer was ' + correct + '.');
+    speak('Not quite! The answer was ' + correct + '. Move back one space.');
+    document.getElementById('answer-display').style.animation = 'shake .4s ease';
+    setTimeout(function(){ document.getElementById('answer-display').style.animation=''; },500);
+
+    setTimeout(function(){
+      if(state.questionNum >= 20){
+        showWin();
+      } else {
+        afterQuestion();
+      }
+    }, 2200);
+  }
+}
+
+function afterQuestion(){
+  if(state.questionNum >= 20){
+    showWin(); return;
+  }
+  setFeedback('idle', '✨ Press the button for your next number!');
+  document.getElementById('btn-generate').disabled = false;
+  state.answerInput = '';
+  updateAnswerDisplay();
+  document.getElementById('big-number').textContent = '—';
+  document.getElementById('question-box').style.display = 'none';
+}
+
+// ══════════════════════════════
+// FEEDBACK
+// ══════════════════════════════
+function setFeedback(type, msg){
+  var banner = document.getElementById('feedback-banner');
+  banner.className = 'feedback-banner ' + type;
+  banner.textContent = msg;
+}
+
+// ══════════════════════════════
+// HUD
+// ══════════════════════════════
+function updateHUD(){
+  document.getElementById('hud-q').textContent = Math.min(state.questionNum + (state.waitingForAnswer?0:1), 20);
+  document.getElementById('hud-step').textContent = state.step;
+  document.getElementById('hud-score').textContent = state.score;
+}
+
+// ══════════════════════════════
+// WIN
+// ══════════════════════════════
+function showWin(){
+  launchConfetti();
+  winCharacter = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];
+  document.getElementById('win-character').textContent = winCharacter.emoji;
+  document.getElementById('win-title').textContent = 'You Reached the Castle!';
+  document.getElementById('win-char-name').textContent = winCharacter.name + ' appeared!';
+  document.getElementById('win-speech').textContent = winCharacter.speech;
+  document.getElementById('ws-score').textContent = state.score;
+  document.getElementById('ws-correct').textContent = state.correct;
+  document.getElementById('ws-wrong').textContent = state.wrong;
+  showScreen('screen-win');
+  setTimeout(function(){
+    speak('Congratulations! You reached the magical castle! ' + winCharacter.speech.replace(/["""]/g,''));
+  }, 600);
+}
+
+// ══════════════════════════════
+// CONFETTI + EMOJI
+// ══════════════════════════════
+function launchConfetti(){
+  var c=['#ffd700','#ff6eb4','#00e5cc','#a29bfe','#2ed573','#ff4757'];
+  for(var i=0;i<100;i++){
+    (function(){
+      var p=document.createElement('div');
+      p.className='confetti-piece';
+      p.style.left=Math.random()*100+'vw';
+      p.style.top='-20px';
+      p.style.background=c[Math.floor(Math.random()*c.length)];
+      p.style.animationDuration=(Math.random()*2.5+1.5)+'s';
+      p.style.animationDelay=(Math.random()*.8)+'s';
+      p.style.width=(Math.random()*10+6)+'px';
+      p.style.height=p.style.width;
+      document.body.appendChild(p);
+      setTimeout(function(){p.remove();},5000);
+    })();
+  }
+}
+
+function spawnEmoji(emoji,el){
+  var r=el.getBoundingClientRect();
+  var s=document.createElement('span');
+  s.className='float-emoji';
+  s.textContent=emoji;
+  s.style.left=(r.left+r.width/2-16)+'px';
+  s.style.top=r.top+'px';
+  document.body.appendChild(s);
+  setTimeout(function(){s.remove();},1000);
+}
+
+// Keyboard support
+document.addEventListener('keydown', function(e){
+  if(document.getElementById('screen-game').classList.contains('active') && state.waitingForAnswer){
+    if(e.key >= '0' && e.key <= '9') numPress(e.key);
+    else if(e.key === 'Backspace') numDelete();
+    else if(e.key === 'Enter' && state.answerInput !== '') submitAnswer();
+  }
+});
+</script>
+</body>
+</html>

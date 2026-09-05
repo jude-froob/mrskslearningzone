@@ -1,0 +1,738 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Guess the Number — Place Value Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#f0f2f5;
+  --white:#fff;
+  --dark:#1a1a2e;
+  --mid:#5a6272;
+  --border:#d0d5de;
+  --green:#27ae60;
+  --green-l:#d5f5e3;
+  --orange:#e67e22;
+  --orange-l:#fdebd0;
+  --red:#e74c3c;
+  --red-l:#fde8e7;
+  --blue:#2980b9;
+  --blue-l:#d6eaf8;
+}
+
+/* ── LOCK TO SCREEN — no scroll ── */
+html,body{
+  width:100%;height:100%;
+  overflow:hidden;
+  font-family:'Lexend Deca',sans-serif;
+  background:var(--bg);
+  color:var(--dark);
+}
+
+/* ── FULL-SCREEN LAYOUT ── */
+.app{
+  display:grid;
+  grid-template-rows:auto 1fr auto;
+  height:100dvh;
+  max-width:900px;
+  margin:0 auto;
+  padding:0 10px;
+}
+
+/* ════════ TOP BAR ════════ */
+.top-bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:8px 4px 6px;
+  gap:8px;
+  flex-wrap:wrap;
+  border-bottom:2px solid var(--border);
+}
+
+.title-block h1{
+  font-size:clamp(1.1rem,3vw,1.5rem);
+  font-weight:900;
+  color:var(--dark);
+  letter-spacing:-.5px;
+  line-height:1.1;
+}
+.title-block p{
+  font-size:.72rem;
+  font-weight:700;
+  color:var(--mid);
+  margin-top:1px;
+}
+
+.legend{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+.legend-item{
+  display:flex;align-items:center;gap:5px;
+  background:var(--white);border:1.5px solid var(--border);
+  border-radius:50px;padding:3px 10px;
+  font-size:.7rem;font-weight:800;color:var(--dark);
+}
+.sw{width:16px;height:16px;border-radius:4px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.6rem;font-weight:900;color:#fff}
+.sw-g{background:var(--green)}
+.sw-o{background:var(--orange)}
+.sw-r{background:var(--red)}
+
+.btn-new{
+  background:var(--dark);color:#fff;border:none;
+  border-radius:50px;padding:7px 16px;
+  font-family:'Lexend Deca',sans-serif;font-size:.78rem;font-weight:900;
+  cursor:pointer;white-space:nowrap;flex-shrink:0;
+  box-shadow:0 3px 0 rgba(0,0,0,.25);transition:transform .12s;
+}
+.btn-new:hover{transform:translateY(-1px)}
+
+/* ════════ MIDDLE — two-column ════════ */
+.middle{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:10px;
+  padding:8px 0;
+  min-height:0; /* allow shrink */
+  align-items:start;
+}
+
+/* ── LEFT: Chart ── */
+.chart-wrap{
+  background:var(--white);
+  border-radius:16px;
+  border:2px solid var(--border);
+  box-shadow:0 4px 16px rgba(0,0,0,.07);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+/* chart header */
+.chart-header{
+  display:grid;
+  grid-template-columns:32px repeat(3,1fr);
+  background:var(--dark);
+  border-bottom:2px solid rgba(255,255,255,.1);
+}
+.ch-blank{background:var(--dark)}
+.ch-col{
+  padding:8px 4px;
+  text-align:center;
+  border-left:1.5px solid rgba(255,255,255,.12);
+}
+.col-name{
+  font-size:clamp(.72rem,1.8vw,.95rem);
+  font-weight:900;color:#fff;display:block;letter-spacing:.3px;
+}
+.col-abbr{font-size:.6rem;color:rgba(255,255,255,.5);font-weight:700;display:block;margin-top:1px}
+
+/* chart body */
+.chart-body{flex:1}
+.chart-row{
+  display:grid;
+  grid-template-columns:32px repeat(3,1fr);
+  border-bottom:1.5px solid var(--border);
+  transition:background .2s;
+}
+.chart-row:last-child{border-bottom:none}
+.chart-row.active-row{background:#f0f7ff}
+
+.row-num{
+  display:flex;align-items:center;justify-content:center;
+  font-size:.78rem;font-weight:900;color:var(--mid);
+  background:#f8f9fa;border-right:1.5px solid var(--border);
+}
+
+.chart-cell{
+  border-left:1.5px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  height:clamp(52px,8.5vh,76px);
+  position:relative;transition:all .35s cubic-bezier(.34,1.56,.64,1);
+  cursor:default;
+}
+.chart-cell.empty{background:var(--white)}
+.chart-cell.input-cell{background:#f0f7ff;cursor:pointer}
+.chart-cell.input-cell:hover{background:#daeeff}
+.chart-cell.input-cell.selected{
+  background:#cce5ff;
+  outline:3px solid var(--blue);outline-offset:-3px;z-index:2;
+}
+.chart-cell.state-green{background:var(--green);animation:flipIn .35s ease both}
+.chart-cell.state-orange{background:var(--orange);animation:flipIn .35s .08s ease both}
+.chart-cell.state-red{background:var(--red);animation:flipIn .35s .16s ease both}
+.chart-cell.state-entered{background:var(--white);outline:2.5px solid var(--dark);outline-offset:-2.5px}
+
+.cell-digit{
+  font-size:clamp(1.3rem,4vw,2.2rem);
+  font-weight:900;color:var(--dark);line-height:1;user-select:none;
+}
+.chart-cell.state-green .cell-digit,
+.chart-cell.state-orange .cell-digit,
+.chart-cell.state-red .cell-digit{color:#fff}
+
+@keyframes flipIn{
+  0%{transform:scaleY(.3);opacity:.5}
+  60%{transform:scaleY(1.08)}
+  100%{transform:scaleY(1);opacity:1}
+}
+
+/* ── RIGHT: Controls ── */
+.controls{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  width:clamp(160px,28vw,220px);
+}
+
+/* guess dots */
+.guess-dots{
+  display:flex;justify-content:center;gap:6px;
+  background:var(--white);border:1.5px solid var(--border);
+  border-radius:12px;padding:8px 10px;
+}
+.guess-dot{
+  width:12px;height:12px;border-radius:50%;
+  background:var(--border);border:2px solid var(--dark);transition:all .3s;
+}
+.guess-dot.used{background:var(--dark)}
+.guess-dot.win{background:var(--green);border-color:var(--green)}
+
+/* column selector */
+.col-selector{
+  background:var(--white);border:1.5px solid var(--border);
+  border-radius:12px;padding:8px;
+}
+.cs-label{
+  font-size:.68rem;font-weight:900;color:var(--mid);
+  text-transform:uppercase;letter-spacing:.5px;
+  text-align:center;margin-bottom:6px;
+}
+.col-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.col-btn{
+  border:2px solid var(--border);border-radius:8px;
+  background:var(--white);color:var(--dark);
+  font-family:'Lexend Deca',sans-serif;font-size:.7rem;font-weight:900;
+  padding:7px 4px;cursor:pointer;transition:all .12s;text-align:center;
+}
+.col-btn:hover{background:var(--blue-l);border-color:var(--blue)}
+.col-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+/* digit pad */
+.digit-pad{
+  background:var(--white);border:1.5px solid var(--border);
+  border-radius:12px;padding:8px;flex:1;
+}
+.dp-label{
+  font-size:.68rem;font-weight:900;color:var(--mid);
+  text-transform:uppercase;letter-spacing:.5px;
+  text-align:center;margin-bottom:6px;
+}
+.digit-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:5px;
+}
+.digit-btn{
+  background:var(--white);border:2px solid var(--dark);
+  border-radius:9px;
+  font-family:'Lexend Deca',sans-serif;
+  font-size:clamp(1rem,2.5vw,1.3rem);font-weight:900;color:var(--dark);
+  padding:10px 4px;cursor:pointer;
+  transition:all .12s;box-shadow:0 2px 0 rgba(0,0,0,.15);
+  user-select:none;
+}
+.digit-btn:hover{background:var(--dark);color:#fff;transform:translateY(-1px);box-shadow:0 4px 0 rgba(0,0,0,.2)}
+.digit-btn:active{transform:translateY(0);box-shadow:0 1px 0 rgba(0,0,0,.15)}
+.digit-btn.zero{grid-column:span 2}
+.digit-btn.del{background:var(--red-l);border-color:var(--red);color:var(--red);font-size:.9rem}
+.digit-btn.del:hover{background:var(--red);color:#fff}
+
+/* action buttons */
+.action-btns{display:flex;flex-direction:column;gap:6px}
+.btn-submit{
+  background:var(--dark);color:#fff;border:none;
+  border-radius:50px;padding:11px 10px;
+  font-family:'Lexend Deca',sans-serif;font-size:.82rem;font-weight:900;
+  cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.3);
+  transition:transform .12s,box-shadow .12s;text-align:center;
+  line-height:1.3;
+}
+.btn-submit:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 5px 0 rgba(0,0,0,.3)}
+.btn-submit:disabled{opacity:.35;cursor:default}
+.btn-clear{
+  background:var(--bg);color:var(--mid);
+  border:1.5px solid var(--border);border-radius:50px;
+  padding:8px 10px;font-family:'Lexend Deca',sans-serif;
+  font-size:.75rem;font-weight:900;cursor:pointer;
+  transition:all .12s;text-align:center;
+}
+.btn-clear:hover:not(:disabled){background:#e0e3e8;color:var(--dark)}
+.btn-clear:disabled{opacity:.35;cursor:default}
+
+/* ════════ BOTTOM BAR — feedback ════════ */
+.bottom-bar{
+  padding:6px 4px 8px;
+  border-top:2px solid var(--border);
+}
+.feedback{
+  text-align:center;font-size:.82rem;font-weight:900;
+  padding:7px 14px;border-radius:8px;min-height:36px;
+  display:flex;align-items:center;justify-content:center;
+}
+.fb-idle{color:var(--mid);background:transparent}
+.fb-correct{color:var(--green);background:var(--green-l);border:1.5px solid var(--green)}
+.fb-wrong{color:var(--red);background:var(--red-l);border:1.5px solid var(--red)}
+.fb-info{color:var(--blue);background:var(--blue-l);border:1.5px solid var(--blue)}
+.fb-gameover{color:var(--orange);background:var(--orange-l);border:1.5px solid var(--orange)}
+
+/* ════════ OVERLAYS ════════ */
+.overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.6);z-index:100;
+  align-items:center;justify-content:center;padding:20px;
+}
+.overlay.show{display:flex}
+.overlay-card{
+  background:var(--white);border-radius:22px;
+  padding:36px 30px;text-align:center;
+  max-width:380px;width:100%;
+  box-shadow:0 20px 60px rgba(0,0,0,.25);
+  animation:popIn .4s cubic-bezier(.175,.885,.32,1.275);
+}
+.ov-emoji{font-size:3.5rem;display:block;margin-bottom:10px}
+.ov-title{font-size:1.8rem;font-weight:900;color:var(--dark);margin-bottom:6px}
+.ov-sub{font-size:.95rem;font-weight:700;color:var(--mid);margin-bottom:6px;line-height:1.5}
+.ov-num{
+  font-size:3.2rem;font-weight:900;color:var(--blue);
+  display:block;margin:8px 0 18px;letter-spacing:4px;
+}
+.btn-again{
+  background:var(--dark);color:#fff;border:none;
+  border-radius:50px;padding:12px 32px;
+  font-family:'Lexend Deca',sans-serif;font-size:1rem;font-weight:900;
+  cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,.3);
+  transition:transform .12s,box-shadow .12s;
+}
+.btn-again:hover{transform:translateY(-2px);box-shadow:0 6px 0 rgba(0,0,0,.3)}
+
+/* confetti */
+.confetti-piece{position:fixed;pointer-events:none;z-index:300;border-radius:2px;animation:confettiFall linear forwards}
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+@keyframes popIn{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+/* ════════ LANDSCAPE / SMALL PHONE fallback ════════ */
+@media(max-height:600px){
+  .chart-cell{height:44px}
+  .digit-btn{padding:7px 4px;font-size:.95rem}
+  .btn-submit{padding:8px 10px;font-size:.75rem}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="title-block">
+      <h1>🔢 Guess the Number</h1>
+      <p>Place Value Challenge · 100 to 500 · 5 guesses</p>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="sw sw-g">✓</div>Right place</div>
+      <div class="legend-item"><div class="sw sw-o">~</div>Wrong place</div>
+      <div class="legend-item"><div class="sw sw-r">✗</div>Not in number</div>
+    </div>
+    <button class="btn-new" onclick="newGame()">🔄 New Game</button>
+  </div>
+
+  <!-- MIDDLE -->
+  <div class="middle">
+
+    <!-- LEFT: Place Value Chart -->
+    <div class="chart-wrap">
+      <div class="chart-header">
+        <div class="ch-blank"></div>
+        <div class="ch-col">
+          <span class="col-name">Hundreds</span>
+          <span class="col-abbr">H</span>
+        </div>
+        <div class="ch-col">
+          <span class="col-name">Tens</span>
+          <span class="col-abbr">T</span>
+        </div>
+        <div class="ch-col">
+          <span class="col-name">Ones</span>
+          <span class="col-abbr">O</span>
+        </div>
+      </div>
+      <div class="chart-body" id="chart-body"></div>
+    </div>
+
+    <!-- RIGHT: Controls -->
+    <div class="controls">
+
+      <!-- Guess dots -->
+      <div class="guess-dots">
+        <div class="guess-dot" id="gdot-0"></div>
+        <div class="guess-dot" id="gdot-1"></div>
+        <div class="guess-dot" id="gdot-2"></div>
+        <div class="guess-dot" id="gdot-3"></div>
+        <div class="guess-dot" id="gdot-4"></div>
+      </div>
+
+      <!-- Column chooser -->
+      <div class="col-selector">
+        <div class="cs-label">Select column:</div>
+        <div class="col-btns">
+          <button class="col-btn active" id="colbtn-0" onclick="selectCol(0)">H</button>
+          <button class="col-btn" id="colbtn-1" onclick="selectCol(1)">T</button>
+          <button class="col-btn" id="colbtn-2" onclick="selectCol(2)">O</button>
+        </div>
+      </div>
+
+      <!-- Digit pad -->
+      <div class="digit-pad">
+        <div class="dp-label">Pick a digit:</div>
+        <div class="digit-grid">
+          <button class="digit-btn" onclick="enterDigit(1)">1</button>
+          <button class="digit-btn" onclick="enterDigit(2)">2</button>
+          <button class="digit-btn" onclick="enterDigit(3)">3</button>
+          <button class="digit-btn" onclick="enterDigit(4)">4</button>
+          <button class="digit-btn" onclick="enterDigit(5)">5</button>
+          <button class="digit-btn" onclick="enterDigit(6)">6</button>
+          <button class="digit-btn" onclick="enterDigit(7)">7</button>
+          <button class="digit-btn" onclick="enterDigit(8)">8</button>
+          <button class="digit-btn" onclick="enterDigit(9)">9</button>
+          <button class="digit-btn zero" onclick="enterDigit(0)">0</button>
+          <button class="digit-btn del" onclick="clearCurrentCell()">⌫</button>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="action-btns">
+        <button class="btn-submit" id="btn-submit" onclick="submitGuess()" disabled>
+          ✔ Check My Guess!
+        </button>
+        <button class="btn-clear" id="btn-clear" onclick="clearRow()">
+          ↩ Clear Row
+        </button>
+      </div>
+
+    </div><!-- /controls -->
+  </div><!-- /middle -->
+
+  <!-- BOTTOM FEEDBACK -->
+  <div class="bottom-bar">
+    <div class="feedback fb-idle" id="feedback">
+      👆 Choose a column, then tap a digit!
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- WIN OVERLAY -->
+<div class="overlay" id="overlay-win">
+  <div class="overlay-card">
+    <span class="ov-emoji">🎉</span>
+    <div class="ov-title" id="win-title">You got it!</div>
+    <div class="ov-sub" id="win-sub">Amazing place value thinking!</div>
+    <span class="ov-num" id="win-number"></span>
+    <button class="btn-again" onclick="newGame();closeOverlays()">🔄 Play Again</button>
+  </div>
+</div>
+
+<!-- LOSE OVERLAY -->
+<div class="overlay" id="overlay-lose">
+  <div class="overlay-card">
+    <span class="ov-emoji">🤔</span>
+    <div class="ov-title">So close!</div>
+    <div class="ov-sub">You used all 5 guesses.<br>The secret number was:</div>
+    <span class="ov-num" id="lose-number"></span>
+    <button class="btn-again" onclick="newGame();closeOverlays()">🔄 Try Again</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════
+// STATE
+// ══════════════════════════════
+var secret=[], secretNum=0;
+var maxGuesses=5;
+var currentRow=0, currentCol=0;
+var currentGuess=[null,null,null];
+var gameOver=false;
+var COL_NAMES=['Hundreds','Tens','Ones'];
+
+// ══════════════════════════════
+// NEW GAME
+// ══════════════════════════════
+function newGame(){
+  secretNum=Math.floor(Math.random()*401)+100;
+  secret=[Math.floor(secretNum/100),Math.floor((secretNum%100)/10),secretNum%10];
+  currentRow=0; currentCol=0;
+  currentGuess=[null,null,null];
+  gameOver=false;
+  buildChart();
+  resetDots();
+  document.getElementById('btn-submit').disabled=true;
+  document.getElementById('btn-clear').disabled=false;
+  setFeedback('idle','👆 Choose a column, then tap a digit!');
+  updateColBtns();
+  highlightActiveRow();
+  highlightSelectedCol();
+}
+
+// ══════════════════════════════
+// BUILD CHART
+// ══════════════════════════════
+function buildChart(){
+  var body=document.getElementById('chart-body'); body.innerHTML='';
+  for(var r=0;r<maxGuesses;r++){
+    var row=document.createElement('div');
+    row.className='chart-row'; row.id='row-'+r;
+    var rn=document.createElement('div');
+    rn.className='row-num'; rn.textContent=r+1;
+    row.appendChild(rn);
+    for(var c=0;c<3;c++){
+      var cell=document.createElement('div');
+      cell.className='chart-cell empty';
+      cell.id='cell-'+r+'-'+c;
+      cell.dataset.row=r; cell.dataset.col=c;
+      var d=document.createElement('span');
+      d.className='cell-digit'; d.id='digit-'+r+'-'+c;
+      cell.appendChild(d);
+      (function(rr,cc){
+        cell.addEventListener('click',function(){
+          if(gameOver||rr!==currentRow) return;
+          selectCol(cc);
+        });
+      })(r,c);
+      row.appendChild(cell);
+    }
+    body.appendChild(row);
+  }
+}
+
+// ══════════════════════════════
+// COLUMN SELECTION
+// ══════════════════════════════
+function selectCol(col){
+  currentCol=col;
+  updateColBtns();
+  highlightSelectedCol();
+}
+
+function updateColBtns(){
+  for(var i=0;i<3;i++){
+    var btn=document.getElementById('colbtn-'+i);
+    if(btn) btn.classList.toggle('active',i===currentCol);
+  }
+}
+
+function highlightActiveRow(){
+  for(var r=0;r<maxGuesses;r++){
+    var row=document.getElementById('row-'+r);
+    if(row) row.classList.toggle('active-row',r===currentRow);
+  }
+}
+
+function highlightSelectedCol(){
+  for(var r=0;r<maxGuesses;r++){
+    for(var c=0;c<3;c++){
+      var cell=document.getElementById('cell-'+r+'-'+c);
+      if(!cell) continue;
+      if(r===currentRow && !cell.classList.contains('state-green') &&
+         !cell.classList.contains('state-orange') && !cell.classList.contains('state-red')){
+        cell.classList.remove('empty');
+        cell.classList.add('input-cell');
+        cell.classList.toggle('selected',c===currentCol);
+      }
+    }
+  }
+}
+
+// ══════════════════════════════
+// DIGIT ENTRY
+// ══════════════════════════════
+function enterDigit(d){
+  if(gameOver) return;
+  currentGuess[currentCol]=d;
+  document.getElementById('digit-'+currentRow+'-'+currentCol).textContent=d;
+  var cell=document.getElementById('cell-'+currentRow+'-'+currentCol);
+  cell.classList.remove('empty');
+  cell.classList.add('state-entered','input-cell');
+
+  // Auto-advance to next empty column
+  var next=nextEmptyCol();
+  if(next!==-1) selectCol(next);
+  else selectCol(currentCol);
+
+  var allFilled=currentGuess.every(function(v){return v!==null;});
+  document.getElementById('btn-submit').disabled=!allFilled;
+  setFeedback('idle', allFilled
+    ? '✅ All filled — press Check My Guess!'
+    : '👆 Now choose the '+COL_NAMES[currentCol]+' column');
+}
+
+function nextEmptyCol(){
+  for(var i=0;i<3;i++) if(currentGuess[i]===null) return i;
+  return -1;
+}
+
+function clearCurrentCell(){
+  if(gameOver) return;
+  currentGuess[currentCol]=null;
+  document.getElementById('digit-'+currentRow+'-'+currentCol).textContent='';
+  var cell=document.getElementById('cell-'+currentRow+'-'+currentCol);
+  cell.classList.remove('state-entered');
+  cell.classList.add('input-cell');
+  document.getElementById('btn-submit').disabled=true;
+  setFeedback('idle','Pick a digit for the '+COL_NAMES[currentCol]+' column.');
+}
+
+function clearRow(){
+  if(gameOver) return;
+  currentGuess=[null,null,null];
+  for(var c=0;c<3;c++){
+    var cell=document.getElementById('cell-'+currentRow+'-'+c);
+    cell.classList.remove('state-entered');
+    cell.classList.add('input-cell');
+    document.getElementById('digit-'+currentRow+'-'+c).textContent='';
+  }
+  document.getElementById('btn-submit').disabled=true;
+  selectCol(0);
+  setFeedback('idle','↩ Cleared! Pick your digits again.');
+}
+
+// ══════════════════════════════
+// SUBMIT
+// ══════════════════════════════
+function submitGuess(){
+  if(gameOver||!currentGuess.every(function(v){return v!==null;})) return;
+
+  // Evaluate — two-pass Wordle logic
+  var results=[null,null,null];
+  var sc=secret.slice(), gc=currentGuess.slice();
+  for(var i=0;i<3;i++){
+    if(gc[i]===sc[i]){results[i]='green';sc[i]=-1;gc[i]=-1;}
+  }
+  for(var i=0;i<3;i++){
+    if(gc[i]===-1) continue;
+    var idx=sc.indexOf(gc[i]);
+    if(idx!==-1){results[i]='orange';sc[idx]=-1;}
+    else results[i]='red';
+  }
+
+  var stateMap={green:'state-green',orange:'state-orange',red:'state-red'};
+  for(var c=0;c<3;c++){
+    (function(col,res,delay){
+      setTimeout(function(){
+        var cell=document.getElementById('cell-'+currentRow+'-'+col);
+        cell.classList.remove('input-cell','selected','state-entered','empty');
+        cell.classList.add(stateMap[res]);
+      },delay);
+    })(c,results[c],c*160);
+  }
+
+  var isWin=results.every(function(r){return r==='green';});
+  document.getElementById('gdot-'+currentRow).classList.add(isWin?'win':'used');
+
+  setTimeout(function(){
+    if(isWin){
+      gameOver=true;
+      var msgs=['Incredible! First try! 🏆','Amazing — 2 guesses! ⭐','Brilliant — 3 guesses! 🎉','Well done — 4 guesses! 👏','Got it last go! 😅'];
+      var g=currentRow;
+      document.getElementById('win-title').textContent=g===0?'First Try! 🏆':'You got it! 🎉';
+      document.getElementById('win-sub').textContent=msgs[g];
+      document.getElementById('win-number').textContent=secretNum;
+      setFeedback('correct','🎉 Correct! The number was '+secretNum+'!');
+      setTimeout(function(){document.getElementById('overlay-win').classList.add('show');launchConfetti();},400);
+    } else {
+      currentRow++;
+      if(currentRow>=maxGuesses){
+        gameOver=true;
+        document.getElementById('lose-number').textContent=secretNum;
+        setFeedback('gameover','😬 Out of guesses! The number was '+secretNum+'.');
+        document.getElementById('btn-submit').disabled=true;
+        document.getElementById('btn-clear').disabled=true;
+        setTimeout(function(){document.getElementById('overlay-lose').classList.add('show');},500);
+      } else {
+        currentGuess=[null,null,null];
+        document.getElementById('btn-submit').disabled=true;
+        highlightActiveRow();
+        selectCol(0);
+        for(var c=0;c<3;c++){
+          var cell=document.getElementById('cell-'+currentRow+'-'+c);
+          cell.classList.remove('empty');
+          cell.classList.add('input-cell');
+        }
+        highlightSelectedCol();
+        setFeedback('idle','Good try! Pick digits for row '+(currentRow+1)+'.');
+      }
+    }
+  },3*160+350);
+}
+
+// ══════════════════════════════
+// DOTS / FEEDBACK / OVERLAYS
+// ══════════════════════════════
+function resetDots(){
+  for(var i=0;i<5;i++) document.getElementById('gdot-'+i).className='guess-dot';
+}
+function setFeedback(type,msg){
+  var el=document.getElementById('feedback');
+  el.className='feedback fb-'+type; el.textContent=msg;
+}
+function closeOverlays(){
+  document.getElementById('overlay-win').classList.remove('show');
+  document.getElementById('overlay-lose').classList.remove('show');
+}
+
+// ══════════════════════════════
+// CONFETTI
+// ══════════════════════════════
+function launchConfetti(){
+  var c=['#27ae60','#e67e22','#2980b9','#f39c12','#8e44ad','#e74c3c'];
+  for(var i=0;i<80;i++){
+    (function(){
+      var p=document.createElement('div'); p.className='confetti-piece';
+      p.style.left=Math.random()*100+'vw'; p.style.top='-20px';
+      p.style.background=c[Math.floor(Math.random()*c.length)];
+      p.style.animationDuration=(Math.random()*2+1.5)+'s';
+      p.style.animationDelay=(Math.random()*.6)+'s';
+      p.style.width=(Math.random()*9+6)+'px'; p.style.height=p.style.width;
+      document.body.appendChild(p);
+      setTimeout(function(){p.remove();},4000);
+    })();
+  }
+}
+
+// ══════════════════════════════
+// KEYBOARD
+// ══════════════════════════════
+document.addEventListener('keydown',function(e){
+  if(gameOver) return;
+  if(e.key>='0'&&e.key<='9') enterDigit(parseInt(e.key));
+  else if(e.key==='Backspace') clearCurrentCell();
+  else if(e.key==='Enter') submitGuess();
+  else if(e.key==='ArrowLeft') selectCol(Math.max(0,currentCol-1));
+  else if(e.key==='ArrowRight') selectCol(Math.min(2,currentCol+1));
+  else if(e.key==='Delete') clearRow();
+});
+
+newGame();
+</script>
+</body>
+</html>

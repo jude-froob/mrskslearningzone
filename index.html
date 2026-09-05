@@ -1,0 +1,597 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mrs K's Learning Zone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --teal-50: #E1F5EE;
+    --teal-100: #9FE1CB;
+    --teal-200: #5DCAA5;
+    --teal-600: #0F6E56;
+    --teal-800: #085041;
+    --amber-50: #FAEEDA;
+    --amber-100: #FAC775;
+    --amber-200: #EF9F27;
+    --amber-600: #854F0B;
+    --mrsk-bg: #FFF4E6;
+    --mrsk-border: #F5C07A;
+    --mrsk-text: #7A4000;
+    --mrsk-badge-bg: #F5A623;
+    --navy: #1B2F45;
+    --cream: #FAF8F4;
+    --cream-dark: #F0EDE6;
+    --gray-600: #5F5E5A;
+    --white: #ffffff;
+    --font-display: 'DM Serif Display', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --radius-lg: 18px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-body);
+    background-color: var(--cream);
+    color: var(--navy);
+    font-size: 16px;
+    line-height: 1.65;
+  }
+
+  /* NAV */
+  nav {
+    background: var(--white);
+    border-bottom: 1px solid rgba(27,47,69,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-brand {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    color: var(--teal-600);
+    text-decoration: none;
+  }
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+  .nav-links a {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-600);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--teal-600); }
+
+  /* HERO */
+  .hero {
+    background: var(--navy);
+    color: var(--white);
+    padding: 5rem 2rem 4.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 50% 100%, rgba(15,110,86,0.35) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-eyebrow {
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--teal-200);
+    margin-bottom: 1rem;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    line-height: 1.1;
+    font-weight: 400;
+    margin-bottom: 1.25rem;
+    position: relative;
+  }
+  .hero h1 em {
+    font-style: italic;
+    color: var(--teal-200);
+  }
+  .hero-sub {
+    font-size: 1.05rem;
+    color: rgba(255,255,255,0.72);
+    max-width: 560px;
+    margin: 0 auto;
+    font-weight: 300;
+    line-height: 1.7;
+  }
+
+  /* MAIN */
+  main {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 3rem 2rem 5rem;
+  }
+
+  /* SECTION HEADERS */
+  .section { margin-bottom: 3.5rem; }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1.5px solid var(--cream-dark);
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 400;
+    color: var(--navy);
+  }
+
+  /* MRS K'S CREATIONS KEY */
+  .mrsk-key {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--mrsk-bg);
+    border: 1.5px solid var(--mrsk-border);
+    border-radius: 999px;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--mrsk-text);
+    margin-bottom: 2rem;
+  }
+
+  /* RESOURCE GRID */
+  .resource-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  /* BASE CARD */
+  .resource-card {
+    background: var(--white);
+    border: 1.5px solid rgba(27,47,69,0.09);
+    border-radius: var(--radius-lg);
+    padding: 1.4rem 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .resource-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--teal-200);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.22s ease;
+  }
+  .resource-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(27,47,69,0.10);
+  }
+  .resource-card:hover::after { transform: scaleX(1); }
+
+  /* MRS K'S CREATION CARD — warm amber tint */
+  .resource-card.mrsk {
+    background: var(--mrsk-bg);
+    border: 1.5px solid var(--mrsk-border);
+  }
+  .resource-card.mrsk::after { background: var(--mrsk-badge-bg); }
+
+  .card-emoji {
+    font-size: 2rem;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+  .card-badge {
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--teal-600);
+    background: var(--teal-50);
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    align-self: flex-start;
+  }
+  .card-badge.mrsk-badge {
+    background: var(--mrsk-badge-bg);
+    color: var(--white);
+  }
+  .card-badge.amber {
+    color: var(--amber-600);
+    background: var(--amber-50);
+  }
+  .card-badge.navy {
+    color: var(--white);
+    background: var(--navy);
+  }
+  .card-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--navy);
+    line-height: 1.3;
+  }
+  .card-desc {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    line-height: 1.55;
+    flex: 1;
+  }
+  .card-arrow {
+    font-size: 0.8rem;
+    color: var(--teal-600);
+    font-weight: 500;
+    margin-top: 0.4rem;
+    transition: gap 0.18s;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .resource-card.mrsk .card-arrow { color: var(--mrsk-text); }
+  .resource-card:hover .card-arrow { gap: 0.55rem; }
+
+  /* VIDEO GRID */
+  .video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.25rem;
+  }
+  .video-card {
+    background: var(--white);
+    border: 1px solid rgba(27,47,69,0.09);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .video-wrapper {
+    position: relative;
+    padding-top: 56.25%;
+    background: var(--navy);
+  }
+  .video-wrapper iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+  .video-info { padding: 1rem 1.25rem; }
+  .video-title {
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: var(--navy);
+    margin-bottom: 0.25rem;
+  }
+  .video-desc { font-size: 0.82rem; color: var(--gray-600); }
+
+  /* FOOTER */
+  footer {
+    background: var(--navy);
+    color: rgba(255,255,255,0.6);
+    text-align: center;
+    padding: 2rem;
+    font-size: 0.85rem;
+  }
+  footer strong { color: rgba(255,255,255,0.9); font-weight: 500; }
+
+  @media (max-width: 600px) {
+    .nav-links { display: none; }
+    .hero { padding: 3.5rem 1.25rem 3rem; }
+    main { padding: 2rem 1.25rem 4rem; }
+    .resource-grid, .video-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-brand">Mrs K's Learning Zone</a>
+    <ul class="nav-links">
+      <li><a href="#literacy">Word Games</a></li>
+      <li><a href="#grammar">Grammar</a></li>
+      <li><a href="#maths">Mathematics</a></li>
+      <li><a href="#videos">Videos</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero">
+  <p class="hero-eyebrow">Early Years P-2 · Australian Curriculum</p>
+  <h1>Mrs K's<br><em>Learning Zone</em></h1>
+  <p class="hero-sub">A special place to learn, play and explore! You'll find games and videos to help you practise your reading, spelling and maths. Have a look around and enjoy! 🌟</p>
+  <p> All Mrs K's activities are curriculum aligned and follow the Science of Learning principles</p>
+</header>
+
+<main>
+
+  <div class="mrsk-key">⭐ Cards with a warm glow are <strong style="margin-left:0.25rem">Mrs K's own creations!</strong></div>
+
+  <!-- WORD GAMES -->
+  <section class="section" id="literacy">
+    <div class="section-header">
+      <h2 class="section-title">✏️ Word Games</h2>
+    </div>
+    <div class="resource-grid">
+
+      <a class="resource-card mrsk" href="tricky_words_1.html">
+        <div class="card-emoji">❓</div>
+        <span class="card-badge mrsk-badge">Mrs K's Creation · Spelling</span>
+        <p class="card-title">said — Tricky Words Game · Term 1</p>
+        <p class="card-desc">Listen to the word and match it — then spell it out!</p>
+        <span class="card-arrow">Let's play →</span>
+      </a>
+
+      <a class="resource-card mrsk" href="Diagraphs_T1.html">
+        <div class="card-emoji">👞</div>
+        <span class="card-badge mrsk-badge">Mrs K's Creation · Spelling</span>
+        <p class="card-title">Digraphs Game · Term 1</p>
+        <p class="card-desc">Listen to the digraphs — match the words and create the words!</p>
+        <span class="card-arrow">Let's play →</span>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- GRAMMAR GAMES -->
+  <section class="section" id="grammar">
+    <div class="section-header">
+      <h2 class="section-title">📝 Grammar Games</h2>
+    </div>
+    <div class="resource-grid">
+
+      <a class="resource-card" href="https://games.abc.net.au/education/goat-punks/">
+        <div class="card-emoji">🐐</div>
+        <span class="card-badge amber">Editing Sentences</span>
+        <p class="card-title">Goat Punks!</p>
+        <p class="card-desc">Spot the mistake and fix it!</p>
+        <span class="card-arrow">Let's play →</span>
+      </a>
+
+      <a class="resource-card" href="https://games.abc.net.au/education/grammar-hammer-nouns/">
+        <div class="card-emoji">🔨</div>
+        <span class="card-badge amber">Editing Sentences</span>
+        <p class="card-title">Hammer Nouns</p>
+        <p class="card-desc">Give each noun an adjective!</p>
+        <span class="card-arrow">Let's play →</span>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- MATHS GAMES -->
+  <section class="section" id="maths">
+    <div class="section-header">
+      <h2 class="section-title">🧮 Maths Games</h2>
+    </div>
+    <div class="resource-grid">
+
+      <a class="resource-card mrsk" href="picture_graph.html">
+        <div class="card-emoji">📊</div>
+        <span class="card-badge mrsk-badge">Mrs K's Creation · Data</span>
+        <p class="card-title">Picture Graph</p>
+        <p class="card-desc">Create your own picture graphs!</p>
+        <span class="card-arrow">Let's play →</span>
+      </a>
+
+      <a class="resource-card mrsk" href="maths/guess_my_number_500.html">
+        <div class="card-emoji">#️⃣</div>
+        <span class="card-badge mrsk-badge">Mrs K's Creation · Place Value</span>
+        <p class="card-title">Guess My Number</p>
+        <p class="card-desc">Can you guess my number?</p>
+        <span class="card-arrow">Let's play →</span>
+      </a>
+
+      <a class="resource-card mrsk" href="maths/castle_quest.html">
+        <div class="card-emoji">🏰</div>
+        <span class="card-badge mrsk-badge">Mrs K's Creation · Place Value</span>
+        <p class="card-title">Castle Quest</p>
+        <p class="card-desc">How much is each digit worth? Use your place value knowledge to 99 to see who's in the castle!</p>
+        <span class="card-arrow">Let's play →</span>
+      </a>
+      
+      <a class="resource-card" href="https://www.topmarks.co.uk/learning-to-count/paint-the-squares">
+        <div class="card-emoji">100</div>
+        <span class="card-badge navy">Place Value</span>
+        <p class="card-title">100 Square — Find the Number</p>
+        <p class="card-desc">There are different games you can play with the 100 square!</p>
+        <span class="card-arrow">Let's play →</span>
+      </a>
+
+      
+
+      <a class="resource-card" href="https://www.scootle.edu.au/ec/viewing/L2317/index.html">
+        <div class="card-emoji">🚄</div>
+        <span class="card-badge navy">Ordering Numbers</span>
+        <p class="card-title">Number Trains</p>
+        <p class="card-desc">Create 4 carriages in the correct order. 5 levels to keep you thinking!</p>
+        <span class="card-arrow">Let's play →</span>
+      </a>
+
+      <a class="resource-card" href="https://games.abc.net.au/education/thundergoats/">
+        <div class="card-emoji">⛈️🐐</div>
+        <span class="card-badge navy">Addition</span>
+        <p class="card-title">Thunder Goats</p>
+        <p class="card-desc">Add 3 or more numbers — use 10 frames to help with your strategy!</p>
+        <span class="card-arrow">Let's play →</span>
+      </a>
+
+      <a class="resource-card" href="https://games.abc.net.au/education/gobblinggoblins-games/GobblingGoblins.html/">
+        <div class="card-emoji">👺</div>
+        <span class="card-badge navy">Addition</span>
+        <p class="card-title">Gobbling Goblins</p>
+        <p class="card-desc">Skip counting in 2s and sorting numbers!</p>
+        <span class="card-arrow">Let's play →</span>
+      </a>
+
+      <a class="resource-card" href="https://games.abc.net.au/education/pinata-party-tens/">
+        <div class="card-emoji">🪅</div>
+        <span class="card-badge navy">Place Value</span>
+        <p class="card-title">Piñata Party — Tens</p>
+        <p class="card-desc">Use your place value knowledge to smash the piñata! Use your 100 chart to help.</p>
+        <span class="card-arrow">Let's play →</span>
+      </a>
+
+      <a class="resource-card" href="https://games.abc.net.au/education/goat-to-bed/">
+        <div class="card-emoji">🐐🛏️</div>
+        <span class="card-badge navy">Counting in 5s</span>
+        <p class="card-title">Goat to Bed!</p>
+        <p class="card-desc">Use your counting knowledge to work out how many goats are asleep!</p>
+        <span class="card-arrow">Let's play →</span>
+      </a>
+      
+      <a class="resource-card" href="https://www.scootle.edu.au/ec/viewing/L8456/index.html">
+        <div class="card-emoji">🔮️</div>
+        <span class="card-badge navy">+ and -</span>
+        <p class="card-title">Wishball 100s</p>
+        <p class="card-desc">Spin the Wishball and use your place value knowledge to hit the target number!!</p>
+        <span class="card-arrow">Let's play →</span>
+      </a>
+
+
+    </div>
+  </section>
+
+  <!-- VIDEOS — TRICKY WORDS -->
+  <section class="section" id="videos">
+    <div class="section-header">
+      <h2 class="section-title">🎬 Videos — Tricky Words</h2>
+    </div>
+    <div class="video-grid">
+      <div class="video-card">
+        <div class="video-wrapper">
+          <iframe src="https://www.youtube.com/embed/QtyPkdYvZHc?si=EBGseKSXL5Nl2SJQ" allowfullscreen loading="lazy" title="Tricky Words Set 1"></iframe>
+        </div>
+        <div class="video-info">
+          <p class="video-title">Tricky Words — Set 1</p>
+          <p class="video-desc">Hear the sounds and practise writing your Tricky Words.</p>
+        </div>
+      </div>
+      <div class="video-card">
+        <div class="video-wrapper">
+          <iframe src="https://www.youtube.com/embed/2EU3YvILh68?si=Je1P_fiQ0haRdwLE" allowfullscreen loading="lazy" title="Tricky Words Set 2"></iframe>
+        </div>
+        <div class="video-info">
+          <p class="video-title">Tricky Words — Set 2</p>
+          <p class="video-desc">Hear the sounds and practise writing your Tricky Words.</p>
+        </div>
+      </div>
+      <div class="video-card">
+        <div class="video-wrapper">
+          <iframe src="https://www.youtube.com/embed/AT8waODxmAU?si=e2SeWdNv7tT8bo70" allowfullscreen loading="lazy" title="Tricky Words Set 3"></iframe>
+        </div>
+        <div class="video-info">
+          <p class="video-title">Tricky Words — Set 3</p>
+          <p class="video-desc">Hear the sounds and practise writing your Tricky Words.</p>
+        </div>
+      </div>
+      <div class="video-card">
+        <div class="video-wrapper">
+          <iframe src="https://www.youtube.com/embed/UDnpAKMUCSs?si=wXfojl1HFrQsNFM2" allowfullscreen loading="lazy" title="Tricky Words Set 4"></iframe>
+        </div>
+        <div class="video-info">
+          <p class="video-title">Tricky Words — Set 4</p>
+          <p class="video-desc">Hear the sounds and practise writing your Tricky Words.</p>
+        </div>
+      </div>
+      <div class="video-card">
+        <div class="video-wrapper">
+          <iframe src="https://www.youtube.com/embed/EWdEESmA-pM?si=f7I4iIY8EZ36kPDU" allowfullscreen loading="lazy" title="Tricky Words Set 5"></iframe>
+        </div>
+        <div class="video-info">
+          <p class="video-title">Tricky Words — Set 5</p>
+          <p class="video-desc">Hear the sounds and practise writing your Tricky Words.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIDEOS — WITH MUSIC -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">🎵 Videos — Tricky Words with Music</h2>
+    </div>
+    <div class="video-grid">
+      <div class="video-card">
+        <div class="video-wrapper">
+          <iframe src="https://www.youtube.com/embed/WeKl3Q7eQA4?si=GfRxbD45h-51x0dp" allowfullscreen loading="lazy" title="Tricky Words Set 1 with music"></iframe>
+        </div>
+        <div class="video-info">
+          <p class="video-title">Tricky Words — Set 1 with Music</p>
+          <p class="video-desc">Hear the sounds and practise writing your Tricky Words.</p>
+        </div>
+      </div>
+      <div class="video-card">
+        <div class="video-wrapper">
+          <iframe src="https://www.youtube.com/embed/kU_N0waO_jE?si=6ah988HE5aUwv9_0" allowfullscreen loading="lazy" title="Tricky Words Set 2 with music"></iframe>
+        </div>
+        <div class="video-info">
+          <p class="video-title">Tricky Words — Set 2 with Music</p>
+          <p class="video-desc">Hear the sounds and practise writing your Tricky Words.</p>
+        </div>
+      </div>
+      <div class="video-card">
+        <div class="video-wrapper">
+          <iframe src="https://www.youtube.com/embed/49zQqlS55ss?si=xNeXR41uUxDhtW2Q" allowfullscreen loading="lazy" title="Tricky Words Set 3 with music"></iframe>
+        </div>
+        <div class="video-info">
+          <p class="video-title">Tricky Words — Set 3 with Music</p>
+          <p class="video-desc">Hear the sounds and practise writing your Tricky Words.</p>
+        </div>
+      </div>
+      <div class="video-card">
+        <div class="video-wrapper">
+          <iframe src="https://www.youtube.com/embed/ZlY1fRU8yBs?si=R5Epd7pS29O74VoC" allowfullscreen loading="lazy" title="Tricky Words Set 4 with music"></iframe>
+        </div>
+        <div class="video-info">
+          <p class="video-title">Tricky Words — Set 4 with Music</p>
+          <p class="video-desc">Hear the sounds and practise writing your Tricky Words.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>🍎 Made with ❤️ by <strong>Mrs K</strong>  · Have a wonderful day! 🌟</p>
+</footer>
+
+</body>
+</html>

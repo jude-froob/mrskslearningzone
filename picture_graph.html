@@ -1,0 +1,786 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Picture Graph Maker</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root {
+    --purple: #7F77DD;
+    --purple-light: #EEEDFE;
+    --purple-mid: #AFA9EC;
+    --purple-dark: #3C3489;
+    --bg: #f5f4ff;
+    --card: #ffffff;
+    --border: #e0dff7;
+    --text: #2a2850;
+    --muted: #7b78a8;
+    --radius: 14px;
+    --radius-sm: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 16px;
+  }
+
+  /* ── Fixed-width centred container ── */
+  .page-container {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--purple-dark);
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  .tagline {
+    font-size: 14px;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 18px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+
+  .card-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .title-input {
+    width: 100%;
+    font-family: 'Nunito', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+  }
+  .title-input:focus { border-color: var(--purple); }
+
+  .icon-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .icon-btn {
+    font-size: 28px;
+    padding: 8px 4px;
+    border: 2.5px solid transparent;
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.1s;
+  }
+  .icon-btn:active { transform: scale(0.88); }
+  .icon-btn.selected { border-color: var(--purple); background: var(--purple-light); }
+
+  .custom-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .custom-emoji-input {
+    flex: 1;
+    font-family: 'Nunito', sans-serif;
+    font-size: 24px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    text-align: center;
+    outline: none;
+  }
+  .custom-emoji-input:focus { border-color: var(--purple); }
+
+  .use-btn {
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: var(--purple);
+    color: white;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform 0.1s, background 0.1s;
+  }
+  .use-btn:active { transform: scale(0.95); background: var(--purple-dark); }
+
+  .cat-inputs { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+
+  .cat-row { display: flex; gap: 8px; align-items: center; }
+
+  .cat-input {
+    flex: 1;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+  }
+  .cat-input:focus { border-color: var(--purple); }
+
+  .del-cat-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--muted);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .del-cat-btn:active { background: #ffe0e0; border-color: #f09595; color: #A32D2D; }
+
+  .add-cat-btn {
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 9px 16px;
+    border-radius: var(--radius-sm);
+    border: 2px dashed var(--purple-mid);
+    background: var(--purple-light);
+    color: var(--purple-dark);
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.1s;
+  }
+  .add-cat-btn:active { background: var(--purple-mid); }
+
+  .graph-card {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+
+  .graph-heading {
+    font-size: 19px;
+    font-weight: 800;
+    text-align: center;
+    color: var(--text);
+    margin-bottom: 16px;
+    min-height: 26px;
+  }
+
+  .graph-rows { display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px; }
+
+  .graph-row { display: flex; align-items: center; gap: 10px; }
+
+  .row-label-btn {
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+    text-align: right;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    border: 2.5px solid transparent;
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.3;
+    transition: background 0.1s, border-color 0.1s;
+  }
+  .row-label-btn.active {
+    border-color: var(--purple);
+    background: var(--purple-light);
+    color: var(--purple-dark);
+  }
+  .row-label-btn:active { transform: scale(0.96); }
+
+  .row-label-static {
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+    text-align: right;
+    padding: 8px 10px;
+    color: var(--text);
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.3;
+  }
+
+  .icons-track {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    flex: 1;
+    min-height: 40px;
+    align-items: center;
+    padding: 4px 6px;
+    border-radius: var(--radius-sm);
+    border: 2px dashed transparent;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .icons-track.active {
+    border-color: var(--purple-mid);
+    background: #EEEDFE55;
+  }
+  .icons-track.static {
+    border: none;
+    background: none;
+    padding: 4px 0;
+  }
+
+  .g-icon {
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .g-icon:active { transform: scale(0.75); }
+  .g-icon.static { cursor: default; }
+
+  .axis-line {
+    border-top: 2px solid var(--border);
+    margin-bottom: 14px;
+    margin-top: 4px;
+  }
+
+  .key-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .key-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .key-label { font-size: 14px; font-weight: 600; color: var(--muted); }
+
+  .key-icon-btn {
+    font-size: 40px;
+    padding: 10px 20px;
+    border: 3px solid transparent;
+    border-radius: var(--radius);
+    background: var(--bg);
+    cursor: pointer;
+    transition: transform 0.1s, border-color 0.15s, background 0.15s;
+  }
+  .key-icon-btn:active { transform: scale(0.85); }
+  .key-icon-btn.ready {
+    border-color: var(--purple);
+    background: var(--purple-light);
+    box-shadow: 0 0 0 4px #AFA9EC44;
+  }
+
+  .hint {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    text-align: center;
+    min-height: 18px;
+    padding: 0 8px;
+  }
+
+  .bottom-row {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 12px;
+  }
+
+  .undo-btn {
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--muted);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .undo-btn:active { background: #ffe0e0; color: #A32D2D; border-color: #f09595; }
+
+  .action-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .btn-primary {
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 12px 0;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: var(--purple);
+    color: white;
+    cursor: pointer;
+    flex: 1;
+    transition: transform 0.1s, background 0.1s;
+  }
+  .btn-primary:active { transform: scale(0.97); background: var(--purple-dark); }
+
+  .btn-secondary {
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 12px 0;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--purple-dark);
+    cursor: pointer;
+    flex: 1;
+    transition: transform 0.1s;
+  }
+  .btn-secondary:active { transform: scale(0.97); }
+
+  #viewSection { display: none; }
+
+  #printArea {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+
+  .print-title {
+    font-size: 22px;
+    font-weight: 800;
+    text-align: center;
+    color: var(--text);
+    margin-bottom: 18px;
+  }
+
+  .print-key {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 18px;
+  }
+
+  .name-area {
+    border-top: 2px solid var(--border);
+    padding-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .name-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .name-input {
+    flex: 1;
+    font-family: 'Nunito', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+  }
+  .name-input:focus { border-color: var(--purple); }
+
+  .save-hint {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 8px;
+    margin-bottom: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-container">
+
+  <h1>🖼️ Picture Graph Maker</h1>
+  <p class="tagline">Build your own picture graph!</p>
+
+  <!-- ═══════════════════════════════ MAKE SECTION ═══════════════════════════════ -->
+  <div id="makeSection">
+
+    <div class="card">
+      <div class="card-title">Graph title</div>
+      <input class="title-input" type="text" id="graphTitle" placeholder="e.g. Our favourite animals" value="" oninput="renderGraph()">
+    </div>
+
+    <div class="card">
+      <div class="card-title">Choose a picture</div>
+      <div class="icon-grid" id="iconGrid"></div>
+      <div class="card-title" style="margin-top:4px;">Or type your own emoji</div>
+      <div class="custom-row">
+        <input class="custom-emoji-input" type="text" id="customEmoji" placeholder="🐠" maxlength="4">
+        <button class="use-btn" onclick="useCustom()">Use this ✓</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Categories</div>
+      <div class="cat-inputs" id="catInputs"></div>
+      <button class="add-cat-btn" onclick="addCat()">+ Add a category</button>
+    </div>
+
+    <div class="graph-card">
+      <div class="graph-heading" id="gTitle"></div>
+      <div class="graph-rows" id="graphRows"></div>
+      <div class="axis-line" id="axisLine"></div>
+
+      <div class="key-section">
+        <div class="key-row">
+          <span class="key-label">Tap to add →</span>
+          <button class="key-icon-btn" id="keyBtn" onclick="tapPicture()" aria-label="Add picture">🍎</button>
+          <span class="key-label">= 1</span>
+        </div>
+        <div class="hint" id="hint">Tap a category name, then tap the picture above</div>
+      </div>
+
+      <div class="bottom-row">
+        <button class="undo-btn" onclick="undo()">↩ Undo</button>
+      </div>
+    </div>
+
+    <div class="action-bar">
+      <button class="btn-primary" onclick="showView()">✅ I'm finished — view my graph!</button>
+    </div>
+
+  </div><!-- end makeSection -->
+
+
+  <!-- ═══════════════════════════════ VIEW SECTION ═══════════════════════════════ -->
+  <div id="viewSection">
+
+    <div id="printArea">
+      <div class="print-title" id="printTitle"></div>
+      <div class="graph-rows" id="printRows"></div>
+      <div class="axis-line" id="printAxis"></div>
+      <div class="print-key" id="printKey"></div>
+      <div class="name-area">
+        <span class="name-label">By:</span>
+        <input class="name-input" type="text" id="creatorName" placeholder="Write your name here">
+      </div>
+    </div>
+
+    <p class="save-hint">Type your name above, then save your graph as a picture 👇</p>
+
+    <div class="action-bar">
+      <button class="btn-primary" onclick="saveImage()">💾 Save as picture</button>
+      <button class="btn-secondary" onclick="backToMake()">✏️ Keep editing</button>
+    </div>
+
+  </div><!-- end viewSection -->
+
+</div><!-- end page-container -->
+
+
+<script>
+const ICONS = ['🍎','🍌','🍇','🍓','🍊','⭐','🐶','🐱','🐸','🦋','🚗','✈️','🏠','📚','⚽','🌸','🎵','🌈','🦄','🍕'];
+let selectedIcon = '🍎';
+let cats = [
+  { label: '' },
+  { label: '' },
+  { label: '' },
+];
+let counts = {};
+let selectedCat = null;
+let labelWidth = 90;
+
+function getEmoji(str) {
+  try {
+    const segs = [...new Intl.Segmenter().segment(str)];
+    return segs.length ? segs[0].segment : '';
+  } catch(e) { return str.trim().slice(0, 2); }
+}
+
+function useCustom() {
+  const raw = document.getElementById('customEmoji').value.trim();
+  const em = getEmoji(raw);
+  if (!em) { setHint('Please type or paste an emoji first!'); return; }
+  selectedIcon = em;
+  document.getElementById('customEmoji').value = '';
+  buildIconGrid();
+  renderGraph();
+  setHint('"' + em + '" is now your picture!');
+}
+
+function buildIconGrid() {
+  const g = document.getElementById('iconGrid');
+  g.innerHTML = '';
+  ICONS.forEach(ic => {
+    const b = document.createElement('button');
+    b.className = 'icon-btn' + (ic === selectedIcon ? ' selected' : '');
+    b.textContent = ic;
+    b.setAttribute('aria-label', ic);
+    b.onclick = () => { selectedIcon = ic; buildIconGrid(); renderGraph(); };
+    g.appendChild(b);
+  });
+}
+
+function buildCatInputs() {
+  const el = document.getElementById('catInputs');
+  el.innerHTML = '';
+  cats.forEach((c, i) => {
+    const row = document.createElement('div');
+    row.className = 'cat-row';
+    const inp = document.createElement('input');
+    inp.className = 'cat-input';
+    inp.type = 'text';
+    inp.value = c.label;
+    inp.placeholder = 'Category name';
+    inp.oninput = () => { cats[i].label = inp.value; recalcLabelWidth(); renderGraph(); };
+    const del = document.createElement('button');
+    del.className = 'del-cat-btn';
+    del.textContent = '×';
+    del.setAttribute('aria-label', 'Remove category');
+    del.onclick = () => removeCat(i);
+    row.appendChild(inp);
+    row.appendChild(del);
+    el.appendChild(row);
+  });
+}
+
+function addCat() {
+  cats.push({ label: '' });
+  buildCatInputs();
+  recalcLabelWidth();
+  renderGraph();
+}
+
+function removeCat(i) {
+  delete counts[catKey(cats[i])];
+  if (selectedCat === cats[i]) selectedCat = null;
+  cats.splice(i, 1);
+  buildCatInputs();
+  recalcLabelWidth();
+  renderGraph();
+}
+
+function catKey(c) { return c.label || ('_cat_' + cats.indexOf(c)); }
+
+function recalcLabelWidth() {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.font = '700 13px Nunito, sans-serif';
+  let max = 70;
+  cats.forEach(c => {
+    const words = (c.label || '').split(' ');
+    words.forEach(w => {
+      const mw = ctx.measureText(w).width + 24;
+      if (mw > max) max = mw;
+    });
+    const full = ctx.measureText(c.label || '').width + 24;
+    if (full < 150 && full > max) max = full;
+  });
+  labelWidth = Math.min(Math.ceil(max) + 4, 160);
+  const al = document.getElementById('axisLine');
+  if (al) al.style.marginLeft = (labelWidth + 10) + 'px';
+}
+
+function setHint(msg) {
+  const h = document.getElementById('hint');
+  if (h) h.textContent = msg;
+}
+
+function selectCat(cat) {
+  selectedCat = (selectedCat === cat) ? null : cat;
+  renderGraph();
+  if (selectedCat) {
+    document.getElementById('keyBtn').classList.add('ready');
+    setHint('Now tap the picture to add it to "' + selectedCat.label + '"');
+  } else {
+    document.getElementById('keyBtn').classList.remove('ready');
+    setHint('Tap a category name, then tap the picture above');
+  }
+}
+
+function tapPicture() {
+  if (!selectedCat) { setHint('First tap a category name to select it!'); return; }
+  const k = catKey(selectedCat);
+  counts[k] = (counts[k] || 0) + 1;
+  renderGraph();
+}
+
+function removeIcon(cat) {
+  const k = catKey(cat);
+  if ((counts[k] || 0) > 0) { counts[k]--; renderGraph(); }
+}
+
+function undo() {
+  const target = selectedCat || cats.slice().reverse().find(c => (counts[catKey(c)] || 0) > 0);
+  if (target) { const k = catKey(target); if ((counts[k] || 0) > 0) { counts[k]--; renderGraph(); } }
+}
+
+function renderGraph() {
+  const titleEl = document.getElementById('gTitle');
+  if (titleEl) titleEl.textContent = document.getElementById('graphTitle').value || 'My picture graph';
+  const rows = document.getElementById('graphRows');
+  if (!rows) return;
+  rows.innerHTML = '';
+
+  cats.forEach(c => {
+    const k = catKey(c);
+    const n = counts[k] || 0;
+    const isActive = selectedCat === c;
+    const row = document.createElement('div');
+    row.className = 'graph-row';
+
+    const labelBtn = document.createElement('button');
+    labelBtn.className = 'row-label-btn' + (isActive ? ' active' : '');
+    labelBtn.textContent = c.label || '—';
+    labelBtn.style.width = labelWidth + 'px';
+    labelBtn.onclick = () => selectCat(c);
+
+    const track = document.createElement('div');
+    track.className = 'icons-track' + (isActive ? ' active' : '');
+    for (let j = 0; j < n; j++) {
+      const span = document.createElement('span');
+      span.className = 'g-icon';
+      span.textContent = selectedIcon;
+      span.title = 'Tap to remove';
+      span.onclick = (e) => { e.stopPropagation(); removeIcon(c); };
+      track.appendChild(span);
+    }
+    track.onclick = () => selectCat(c);
+    row.appendChild(labelBtn);
+    row.appendChild(track);
+    rows.appendChild(row);
+  });
+
+  const kb = document.getElementById('keyBtn');
+  if (kb) kb.textContent = selectedIcon;
+  const al = document.getElementById('axisLine');
+  if (al) al.style.marginLeft = (labelWidth + 10) + 'px';
+  if (selectedCat && !cats.includes(selectedCat)) {
+    selectedCat = null;
+    if (kb) kb.classList.remove('ready');
+  }
+}
+
+function buildPrintView() {
+  const title = document.getElementById('graphTitle').value || 'My picture graph';
+  document.getElementById('printTitle').textContent = title;
+  document.getElementById('printKey').textContent = selectedIcon + ' = 1';
+
+  const rows = document.getElementById('printRows');
+  rows.innerHTML = '';
+
+  cats.forEach(c => {
+    const k = catKey(c);
+    const n = counts[k] || 0;
+    const row = document.createElement('div');
+    row.className = 'graph-row';
+
+    const label = document.createElement('div');
+    label.className = 'row-label-static';
+    label.style.width = labelWidth + 'px';
+    label.textContent = c.label || '—';
+
+    const track = document.createElement('div');
+    track.className = 'icons-track static';
+    for (let j = 0; j < n; j++) {
+      const span = document.createElement('span');
+      span.className = 'g-icon static';
+      span.textContent = selectedIcon;
+      track.appendChild(span);
+    }
+    row.appendChild(label);
+    row.appendChild(track);
+    rows.appendChild(row);
+  });
+
+  document.getElementById('printAxis').style.marginLeft = (labelWidth + 10) + 'px';
+}
+
+function showView() {
+  selectedCat = null;
+  buildPrintView();
+  document.getElementById('makeSection').style.display = 'none';
+  document.getElementById('viewSection').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+function backToMake() {
+  document.getElementById('viewSection').style.display = 'none';
+  document.getElementById('makeSection').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+function saveImage() {
+  const area = document.getElementById('printArea');
+  html2canvas(area, {
+    scale: 2,
+    backgroundColor: '#ffffff',
+    useCORS: true,
+    logging: false
+  }).then(canvas => {
+    const link = document.createElement('a');
+    const name = (document.getElementById('creatorName').value.trim() || 'my-graph').replace(/\s+/g, '-');
+    link.download = 'picture-graph-' + name + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+}
+
+/* ── init ── */
+recalcLabelWidth();
+buildIconGrid();
+buildCatInputs();
+renderGraph();
+</script>
+</body>
+</html>

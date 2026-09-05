@@ -1,0 +1,948 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maths Story Time!</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Baloo+2:wght@700;800&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: #FFF8E7;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .stars-bg {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    overflow: hidden;
+  }
+  .star {
+    position: absolute; border-radius: 50%; opacity: 0.4;
+    animation: twinkle 3s infinite alternate;
+  }
+  @keyframes twinkle { from { opacity: 0.2; transform: scale(1); } to { opacity: 0.6; transform: scale(1.3); } }
+
+  .wrapper {
+    position: relative; z-index: 1;
+    max-width: 780px; margin: 0 auto; padding: 20px 16px 40px;
+  }
+
+  header { text-align: center; padding: 16px 0 20px; }
+
+  .title {
+    font-family: 'Baloo 2', cursive; font-size: 2.6rem; font-weight: 800;
+    color: #E05A00; line-height: 1.1; text-shadow: 3px 3px 0 #FFD580;
+  }
+
+  .subtitle { font-size: 1.1rem; color: #7C5C2B; margin-top: 4px; }
+
+  .level-badge {
+    display: inline-block; margin-top: 8px;
+    padding: 4px 18px; border-radius: 50px;
+    font-size: 0.95rem; font-weight: 800; letter-spacing: 0.06em;
+    transition: background 0.4s, color 0.4s;
+  }
+  .level-badge.lv1 { background: #FFE0A0; color: #7C4A00; }
+  .level-badge.lv2 { background: #D0EAFF; color: #004080; }
+
+  .score-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    background: #fff; border-radius: 50px; padding: 10px 20px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.08); margin-bottom: 20px;
+    border: 2px solid #FFD580;
+  }
+  .score-item { display: flex; align-items: center; gap: 8px; font-size: 1.1rem; font-weight: 800; color: #5C3D00; }
+  .score-icon { font-size: 1.4rem; }
+  .progress-dots { display: flex; gap: 6px; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; background: #E5DCC8; transition: background 0.3s; }
+  .dot.correct { background: #4CAF50; }
+  .dot.wrong { background: #F44336; }
+  .dot.current { background: #FFB300; box-shadow: 0 0 0 3px #FFD580; }
+
+  .scene-card {
+    background: white; border-radius: 28px; padding: 28px 28px 24px;
+    box-shadow: 0 6px 30px rgba(0,0,0,0.1); margin-bottom: 20px;
+    border: 2.5px solid #FFD580; position: relative;
+    transition: border-color 0.4s;
+  }
+  .scene-card.lv2 { border-color: #90CAF9; }
+
+  .scene-emoji { font-size: 3.5rem; text-align: center; margin-bottom: 12px; line-height: 1; }
+
+  .objects-display {
+    display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+    padding: 12px 0 4px; font-size: 2rem; line-height: 1; min-height: 50px;
+  }
+  .obj-group { display: flex; gap: 5px; align-items: center; }
+  .obj-divider { font-size: 1.4rem; color: #888; padding: 0 4px; }
+
+  .story-box {
+    background: #FFF8E7; border-radius: 18px; padding: 18px 20px;
+    font-size: 1.25rem; font-weight: 700; color: #3E2800; line-height: 1.5;
+    text-align: center; border: 2px dashed #FFD580; margin-bottom: 18px;
+    min-height: 80px; display: flex; align-items: center; justify-content: center;
+    transition: background 0.4s, border-color 0.4s;
+  }
+  .story-box.lv2 { background: #EEF6FF; border-color: #90CAF9; }
+
+  .listen-btn {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%; padding: 14px 20px; border-radius: 50px; border: none;
+    background: #FF8C00; color: white; font-family: 'Nunito', sans-serif;
+    font-size: 1.15rem; font-weight: 800; cursor: pointer;
+    transition: transform 0.15s, background 0.15s; box-shadow: 0 4px 0 #C76000;
+  }
+  .listen-btn:hover { background: #E07800; }
+  .listen-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #C76000; }
+  .listen-btn.playing { background: #7B5EA7; box-shadow: 0 4px 0 #5A3F80; }
+  .speaker-icon { font-size: 1.5rem; }
+
+  .task-label {
+    text-align: center; font-size: 1rem; font-weight: 800; color: #7C5C2B;
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px;
+  }
+
+  .choices-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+
+  .choice-btn {
+    background: white; border: 3px solid #E0D0B0; border-radius: 20px;
+    padding: 20px 12px; font-family: 'Baloo 2', cursive; font-size: 1.6rem;
+    font-weight: 700; color: #3E2800; cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s, background 0.15s;
+    box-shadow: 0 4px 0 #D0C090; line-height: 1.3; text-align: center;
+  }
+  .choice-btn:hover { border-color: #FF8C00; transform: translateY(-3px); box-shadow: 0 7px 0 #D0C090; }
+  .choice-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #D0C090; }
+  .choice-btn.correct-answer { background: #E8F5E9; border-color: #4CAF50; box-shadow: 0 4px 0 #2E7D32; animation: celebrate 0.4s ease; }
+  .choice-btn.wrong-answer { background: #FFEBEE; border-color: #F44336; box-shadow: 0 4px 0 #C62828; animation: shake 0.4s ease; }
+
+  @keyframes celebrate { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
+  @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+
+  .feedback-banner {
+    border-radius: 16px; padding: 14px 20px; font-size: 1.2rem; font-weight: 800;
+    text-align: center; margin-bottom: 16px; display: none; animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+  .feedback-banner.correct { background: #E8F5E9; color: #2E7D32; border: 2px solid #4CAF50; display: block; }
+  .feedback-banner.wrong { background: #FFEBEE; color: #C62828; border: 2px solid #F44336; display: block; }
+
+  .next-btn {
+    display: none; width: 100%; padding: 16px; border-radius: 50px; border: none;
+    background: #4CAF50; color: white; font-family: 'Nunito', sans-serif;
+    font-size: 1.2rem; font-weight: 800; cursor: pointer; transition: transform 0.15s;
+    box-shadow: 0 4px 0 #2E7D32;
+  }
+  .next-btn:hover { background: #43A047; }
+  .next-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #2E7D32; }
+  .next-btn.visible { display: block; animation: fadeIn 0.3s ease; }
+
+  /* ---- Level-up transition screen ---- */
+  .levelup-screen {
+    display: none; text-align: center; padding: 30px 20px;
+    animation: fadeIn 0.5s ease;
+  }
+  .levelup-screen.visible { display: block; }
+  .levelup-emoji { font-size: 5rem; margin-bottom: 16px; }
+  .levelup-title { font-family: 'Baloo 2', cursive; font-size: 2rem; font-weight: 800; color: #0060C0; margin-bottom: 10px; }
+  .levelup-body { font-size: 1.15rem; font-weight: 700; color: #3E2800; line-height: 1.6; margin-bottom: 8px; }
+  .levelup-hint {
+    background: #EEF6FF; border: 2px solid #90CAF9; border-radius: 16px;
+    padding: 14px 20px; font-size: 1.05rem; font-weight: 700; color: #004080;
+    margin: 16px 0 24px;
+  }
+  .levelup-btn {
+    padding: 16px 40px; border-radius: 50px; border: none;
+    background: #1976D2; color: white; font-family: 'Nunito', sans-serif;
+    font-size: 1.2rem; font-weight: 800; cursor: pointer;
+    box-shadow: 0 4px 0 #0D47A1; transition: transform 0.15s;
+  }
+  .levelup-btn:hover { background: #1565C0; }
+  .levelup-btn:active { transform: translateY(3px); }
+  .levelup-score { font-size: 1rem; color: #7C5C2B; font-weight: 700; margin-bottom: 20px; }
+
+  /* ---- End screen ---- */
+  .end-screen { display: none; text-align: center; padding: 30px 20px; }
+  .end-screen.visible { display: block; animation: fadeIn 0.5s ease; }
+  .end-emoji { font-size: 5rem; margin-bottom: 16px; }
+  .end-title { font-family: 'Baloo 2', cursive; font-size: 2.2rem; font-weight: 800; color: #E05A00; margin-bottom: 8px; }
+  .end-score { font-size: 1.3rem; font-weight: 700; color: #5C3D00; margin-bottom: 24px; }
+  .end-level-scores { font-size: 1rem; color: #7C5C2B; font-weight: 700; margin-bottom: 20px; line-height: 1.8; }
+  .restart-btn {
+    padding: 16px 40px; border-radius: 50px; border: none;
+    background: #FF8C00; color: white; font-family: 'Nunito', sans-serif;
+    font-size: 1.2rem; font-weight: 800; cursor: pointer;
+    box-shadow: 0 4px 0 #C76000; transition: transform 0.15s;
+  }
+  .restart-btn:hover { background: #E07800; }
+  .restart-btn:active { transform: translateY(3px); }
+
+  .speech-wave { display: none; gap: 3px; align-items: center; justify-content: center; height: 20px; }
+  .speech-wave.active { display: flex; }
+  .speech-wave span { width: 4px; border-radius: 4px; background: white; animation: wave 0.8s infinite ease-in-out; }
+  .speech-wave span:nth-child(1) { height: 6px; animation-delay: 0s; }
+  .speech-wave span:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+  .speech-wave span:nth-child(3) { height: 20px; animation-delay: 0.2s; }
+  .speech-wave span:nth-child(4) { height: 14px; animation-delay: 0.3s; }
+  .speech-wave span:nth-child(5) { height: 6px; animation-delay: 0.4s; }
+  @keyframes wave { 0%,100% { transform: scaleY(0.5); } 50% { transform: scaleY(1.2); } }
+
+  /* ---- Intro screen ---- */
+  .intro-screen { animation: fadeIn 0.6s ease; }
+  .intro-screen.hidden { display: none; }
+  .intro-mascot { font-size: 5rem; line-height: 1; margin-bottom: 10px; display: block; text-align: center; animation: bounce 2s infinite ease-in-out; }
+  @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+  .intro-title {
+    font-family: 'Baloo 2', cursive; font-size: 2.8rem; font-weight: 800;
+    color: #E05A00; line-height: 1.1; text-shadow: 3px 3px 0 #FFD580;
+    margin-bottom: 6px; text-align: center;
+  }
+  .intro-tagline { font-size: 1.15rem; font-weight: 700; color: #7C5C2B; margin-bottom: 24px; text-align: center; }
+  .intro-card {
+    background: white; border-radius: 24px; padding: 24px 24px 20px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.09); border: 2.5px solid #FFD580; margin-bottom: 16px;
+  }
+  .intro-card-title {
+    font-family: 'Baloo 2', cursive; font-size: 1.3rem; font-weight: 800;
+    color: #E05A00; margin-bottom: 14px; text-align: center;
+  }
+  .intro-what { font-size: 1.08rem; font-weight: 700; color: #3E2800; line-height: 1.7; text-align: center; }
+  .levels-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 4px; }
+  .level-card { border-radius: 18px; padding: 18px 14px; text-align: center; border: 2.5px solid; }
+  .level-card.l1 { background: #FFF8E7; border-color: #FFD580; }
+  .level-card.l2 { background: #EEF6FF; border-color: #90CAF9; }
+  .level-card-icon { font-size: 2.2rem; margin-bottom: 6px; line-height: 1; }
+  .level-card-name { font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 800; margin-bottom: 4px; }
+  .level-card.l1 .level-card-name { color: #C46000; }
+  .level-card.l2 .level-card-name { color: #0060C0; }
+  .level-card-desc { font-size: 0.92rem; font-weight: 700; color: #5C3D00; line-height: 1.5; }
+  .level-card.l2 .level-card-desc { color: #004080; }
+  .level-unlock-note { text-align: center; font-size: 0.92rem; font-weight: 700; color: #999; margin-top: 10px; }
+  .teacher-warning {
+    display: flex; align-items: flex-start; gap: 14px;
+    background: #FFF3E0; border: 2.5px solid #FF8C00; border-radius: 18px;
+    padding: 18px 18px; margin-top: 18px; text-align: left;
+    animation: fadeIn 0.4s ease;
+  }
+  .teacher-warning-icon { font-size: 2.2rem; flex-shrink: 0; }
+  .teacher-warning-text { font-size: 1rem; font-weight: 700; color: #7C3A00; line-height: 1.6; }
+  .teacher-warning-text strong { color: #C84800; font-size: 1.05rem; }
+  .how-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  .how-list li { display: flex; align-items: flex-start; gap: 12px; font-size: 1.05rem; font-weight: 700; color: #3E2800; line-height: 1.5; }
+  .how-icon { font-size: 1.5rem; flex-shrink: 0; margin-top: 1px; }
+  .start-btn {
+    display: block; width: 100%; padding: 18px; border-radius: 50px; border: none;
+    background: #FF8C00; color: white; font-family: 'Nunito', sans-serif;
+    font-size: 1.3rem; font-weight: 800; cursor: pointer;
+    box-shadow: 0 5px 0 #C76000; transition: transform 0.15s, background 0.15s; margin-top: 6px;
+  }
+  .start-btn:hover { background: #E07800; }
+  .start-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #C76000; }
+</style>
+</head>
+<body>
+
+<div class="stars-bg" id="starsBg"></div>
+
+<div class="wrapper">
+
+  <!-- INTRO SCREEN -->
+  <div class="intro-screen" id="introScreen">
+    <span class="intro-mascot">🧮</span>
+    <div class="intro-title">Maths Story Time!</div>
+    <div class="intro-tagline">Listen · Think · Match the equation!</div>
+
+    <div class="intro-card">
+      <div class="intro-card-title">📖 What is this game about?</div>
+      <div class="intro-what">
+        You will listen to a short maths story.<br>
+        Your job is to find the <strong>equation</strong> that matches what happened in the story —
+        showing whether to <strong>add</strong> or <strong>subtract</strong>!
+      </div>
+    </div>
+
+    <div class="intro-card">
+      <div class="intro-card-title">🏆 Two levels to unlock!</div>
+      <div class="levels-grid">
+        <div class="level-card l1">
+          <div class="level-card-icon">⭐</div>
+          <div class="level-card-name">Level 1</div>
+          <div class="level-card-desc">8 questions<br>Picture clues help you count the objects!</div>
+        </div>
+        <div class="level-card l2">
+          <div class="level-card-icon">🚀</div>
+          <div class="level-card-name">Level 2</div>
+          <div class="level-card-desc">8 questions<br>No picture clues — just listen carefully!</div>
+        </div>
+      </div>
+      <div class="level-unlock-note">🔒 Score 5 or more on Level 1 to unlock Level 2!</div>
+    </div>
+
+    <div class="intro-card">
+      <div class="intro-card-title">🎮 How to play</div>
+      <ul class="how-list">
+        <li><span class="how-icon">🔊</span><span>Press the orange button to hear the story read aloud — you can listen as many times as you like!</span></li>
+        <li><span class="how-icon">🧠</span><span>Think carefully: are the objects being joined together, or taken away?</span></li>
+        <li><span class="how-icon">👆</span><span>Tap the equation that matches the story. There are 4 choices each time!</span></li>
+      </ul>
+    </div>
+
+    <button class="start-btn" onclick="startGame()">Let's play! 🎉</button>
+  </div>
+
+  <!-- GAME HEADER (hidden until game starts) -->
+  <header id="gameHeader" style="display:none;">
+    <div class="title">🔢 Maths Story Time!</div>
+    <div class="subtitle">Listen to the story, then find the matching sum!</div>
+    <div class="level-badge lv1" id="levelBadge">⭐ Level 1</div>
+  </header>
+
+  <div class="score-bar" id="scoreBar" style="display:none;">
+    <div class="score-item"><span class="score-icon">⭐</span><span id="scoreDisplay">0</span></div>
+    <div class="progress-dots" id="progressDots"></div>
+    <div class="score-item"><span class="score-icon">❓</span><span id="qDisplay">1 / 8</span></div>
+  </div>
+
+  <!-- GAME AREA -->
+  <div id="gameArea" style="display:none;">
+    <div class="scene-card" id="sceneCard">
+      <div class="scene-emoji" id="sceneEmoji">🐦</div>
+      <div class="objects-display" id="objectsDisplay"></div>
+      <div class="story-box" id="storyText">Press the button to hear the story!</div>
+      <button class="listen-btn" id="listenBtn" onclick="readStory()">
+        <span class="speaker-icon">🔊</span>
+        <span id="listenLabel">Hear the story!</span>
+        <div class="speech-wave" id="speechWave">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </button>
+    </div>
+
+    <div class="task-label">👇 Which equation matches the story?</div>
+    <div class="choices-grid" id="choicesGrid"></div>
+    <div class="feedback-banner" id="feedbackBanner"></div>
+    <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Next story ➜</button>
+  </div>
+
+  <!-- LEVEL UP SCREEN -->
+  <div class="levelup-screen" id="levelupScreen">
+    <div class="levelup-emoji">🚀</div>
+    <div class="levelup-title">Level 2 Unlocked!</div>
+    <div class="levelup-score" id="levelupScore"></div>
+    <div class="levelup-body">You did brilliantly on Level 1! 🎉<br>You are ready for the next challenge!</div>
+    <div class="levelup-hint">
+      🧠 <strong>Level 2 is trickier!</strong><br>
+      The picture clues are gone — just listen carefully to the story and use your brain!
+    </div>
+    <button class="levelup-btn" onclick="startLevel2()">Let's go! 🚀</button>
+  </div>
+
+  <!-- NOT QUITE SCREEN (didn't unlock level 2) -->
+  <div class="levelup-screen" id="tryagainScreen">
+    <div class="levelup-emoji">💪</div>
+    <div class="levelup-title" style="color:#E05A00;">Keep Practising!</div>
+    <div class="levelup-score" id="tryagainScore"></div>
+    <div class="levelup-body">You're doing great! Keep going and you'll unlock Level 2!</div>
+    <div class="levelup-hint">
+      🌟 Try Level 1 again to unlock Level 2.<br>You need 5 or more correct to move up!
+    </div>
+    <div id="tryagainWarning"></div>
+    <button class="levelup-btn" style="background:#FF8C00; box-shadow:0 4px 0 #C76000;" onclick="restartGame()">Try Level 1 again! 🔄</button>
+  </div>
+
+  <!-- END SCREEN -->
+  <div class="end-screen" id="endScreen">
+    <div class="end-emoji" id="endEmoji">🎉</div>
+    <div class="end-title" id="endTitle">Amazing work!</div>
+    <div class="end-score" id="endScoreText"></div>
+    <div class="end-level-scores" id="endLevelScores"></div>
+    <div id="endWarning"></div>
+    <button class="restart-btn" onclick="restartGame()">Play again! 🔄</button>
+  </div>
+</div>
+
+<script>
+const ALL_QUESTIONS = [
+  // ── ADDITION ──────────────────────────────────────────────
+  {
+    emoji: "🐦", story: "3 birds are sitting on a branch. Then 2 more birds fly over and join them. How many birds are there altogether?",
+    a: 3, b: 2, op: "+", answer: 5,
+    objects: ["🐦","🐦","🐦"], objects2: ["🐦","🐦"]
+  },
+  {
+    emoji: "🐸", story: "4 frogs are sitting on a log. Then 3 more frogs hop on. How many frogs are on the log now?",
+    a: 4, b: 3, op: "+", answer: 7,
+    objects: ["🐸","🐸","🐸","🐸"], objects2: ["🐸","🐸","🐸"]
+  },
+  {
+    emoji: "🍪", story: "Mum put 2 cookies on a plate. Then she added 6 more cookies. How many cookies are on the plate?",
+    a: 2, b: 6, op: "+", answer: 8,
+    objects: ["🍪","🍪"], objects2: ["🍪","🍪","🍪","🍪","🍪","🍪"]
+  },
+  {
+    emoji: "🚂", story: "Jake has 1 toy train. His grandma gives him 6 more toy trains for his birthday. How many trains does Jake have now?",
+    a: 1, b: 6, op: "+", answer: 7,
+    objects: ["🚂"], objects2: ["🚂","🚂","🚂","🚂","🚂","🚂"]
+  },
+  {
+    emoji: "🌸", story: "There are 6 flowers in a garden. The gardener plants 4 more. How many flowers are in the garden now?",
+    a: 6, b: 4, op: "+", answer: 10,
+    objects: ["🌸","🌸","🌸","🌸","🌸","🌸"], objects2: ["🌸","🌸","🌸","🌸"]
+  },
+  {
+    emoji: "🎈", story: "Lily has 3 red balloons and 4 blue balloons. How many balloons does she have altogether?",
+    a: 3, b: 4, op: "+", answer: 7,
+    objects: ["🎈","🎈","🎈"], objects2: ["🎈","🎈","🎈","🎈"]
+  },
+  {
+    emoji: "🍓", story: "Ben picked 5 strawberries. His sister gave him 3 more. How many strawberries does Ben have now?",
+    a: 5, b: 3, op: "+", answer: 8,
+    objects: ["🍓","🍓","🍓","🍓","🍓"], objects2: ["🍓","🍓","🍓"]
+  },
+  {
+    emoji: "🐱", story: "There are 2 cats sleeping in a basket. Then 5 more cats come to sleep. How many cats are in the basket now?",
+    a: 2, b: 5, op: "+", answer: 7,
+    objects: ["🐱","🐱"], objects2: ["🐱","🐱","🐱","🐱","🐱"]
+  },
+  {
+    emoji: "🍦", story: "Aisha has 4 scoops of ice cream. Her dad gives her 1 more scoop. How many scoops does she have?",
+    a: 4, b: 1, op: "+", answer: 5,
+    objects: ["🍦","🍦","🍦","🍦"], objects2: ["🍦"]
+  },
+  {
+    emoji: "🐠", story: "There are 3 fish swimming on one side of the tank. Then 7 more fish swim over. How many fish are there altogether?",
+    a: 3, b: 7, op: "+", answer: 10,
+    objects: ["🐠","🐠","🐠"], objects2: ["🐠","🐠","🐠","🐠","🐠","🐠","🐠"]
+  },
+  {
+    emoji: "🌈", story: "Mia drew 5 rainbows in the morning and 4 rainbows in the afternoon. How many rainbows did she draw altogether?",
+    a: 5, b: 4, op: "+", answer: 9,
+    objects: ["🌈","🌈","🌈","🌈","🌈"], objects2: ["🌈","🌈","🌈","🌈"]
+  },
+  {
+    emoji: "🍄", story: "There were 6 mushrooms growing in the forest. Overnight, 2 more mushrooms popped up. How many mushrooms are there now?",
+    a: 6, b: 2, op: "+", answer: 8,
+    objects: ["🍄","🍄","🍄","🍄","🍄","🍄"], objects2: ["🍄","🍄"]
+  },
+  {
+    emoji: "🐧", story: "4 penguins are standing on the ice. Then 4 more penguins waddle over. How many penguins are there altogether?",
+    a: 4, b: 4, op: "+", answer: 8,
+    objects: ["🐧","🐧","🐧","🐧"], objects2: ["🐧","🐧","🐧","🐧"]
+  },
+  {
+    emoji: "🎀", story: "Priya has 1 pink ribbon and 8 blue ribbons. How many ribbons does she have in total?",
+    a: 1, b: 8, op: "+", answer: 9,
+    objects: ["🎀"], objects2: ["🎀","🎀","🎀","🎀","🎀","🎀","🎀","🎀"]
+  },
+  {
+    emoji: "🦆", story: "2 ducks are swimming in a pond. Then 3 more ducks jump in. How many ducks are swimming now?",
+    a: 2, b: 3, op: "+", answer: 5,
+    objects: ["🦆","🦆"], objects2: ["🦆","🦆","🦆"]
+  },
+  {
+    emoji: "🍉", story: "The farmer cut 3 slices of watermelon. Then he cut 6 more slices. How many slices are there now?",
+    a: 3, b: 6, op: "+", answer: 9,
+    objects: ["🍉","🍉","🍉"], objects2: ["🍉","🍉","🍉","🍉","🍉","🍉"]
+  },
+  {
+    emoji: "🌻", story: "There are 5 sunflowers in a vase. Grandma puts in 5 more. How many sunflowers are in the vase now?",
+    a: 5, b: 5, op: "+", answer: 10,
+    objects: ["🌻","🌻","🌻","🌻","🌻"], objects2: ["🌻","🌻","🌻","🌻","🌻"]
+  },
+  {
+    emoji: "🐢", story: "There is 1 turtle on a rock. Then 9 more turtles climb up. How many turtles are on the rock altogether?",
+    a: 1, b: 9, op: "+", answer: 10,
+    objects: ["🐢"], objects2: ["🐢","🐢","🐢","🐢","🐢","🐢","🐢","🐢","🐢"]
+  },
+  {
+    emoji: "🎵", story: "Tom can play 4 songs on the piano. He learns 2 more new songs. How many songs can he play now?",
+    a: 4, b: 2, op: "+", answer: 6,
+    objects: ["🎵","🎵","🎵","🎵"], objects2: ["🎵","🎵"]
+  },
+  {
+    emoji: "🍋", story: "There are 7 lemons on a tree. Then 2 more lemons grow. How many lemons are on the tree now?",
+    a: 7, b: 2, op: "+", answer: 9,
+    objects: ["🍋","🍋","🍋","🍋","🍋","🍋","🍋"], objects2: ["🍋","🍋"]
+  },
+  {
+    emoji: "🐶", story: "3 dogs are playing in the park. Then 3 more dogs run in to join them. How many dogs are playing altogether?",
+    a: 3, b: 3, op: "+", answer: 6,
+    objects: ["🐶","🐶","🐶"], objects2: ["🐶","🐶","🐶"]
+  },
+  {
+    emoji: "🚀", story: "Leo has 6 stickers on his rocket book. He adds 4 more stickers. How many stickers does he have now?",
+    a: 6, b: 4, op: "+", answer: 10,
+    objects: ["🚀","🚀","🚀","🚀","🚀","🚀"], objects2: ["🚀","🚀","🚀","🚀"]
+  },
+  {
+    emoji: "🐌", story: "2 snails are on a leaf. Then 6 more snails crawl onto the leaf. How many snails are on the leaf altogether?",
+    a: 2, b: 6, op: "+", answer: 8,
+    objects: ["🐌","🐌"], objects2: ["🐌","🐌","🐌","🐌","🐌","🐌"]
+  },
+  {
+    emoji: "🍇", story: "Zara has 5 grapes in her bowl. Her mum puts in 4 more grapes. How many grapes are in the bowl now?",
+    a: 5, b: 4, op: "+", answer: 9,
+    objects: ["🍇","🍇","🍇","🍇","🍇"], objects2: ["🍇","🍇","🍇","🍇"]
+  },
+  {
+    emoji: "🦁", story: "There are 2 lion cubs playing. Then 8 more lion cubs come over. How many lion cubs are there altogether?",
+    a: 2, b: 8, op: "+", answer: 10,
+    objects: ["🦁","🦁"], objects2: ["🦁","🦁","🦁","🦁","🦁","🦁","🦁","🦁"]
+  },
+  // ── SUBTRACTION ───────────────────────────────────────────
+  {
+    emoji: "🍎", story: "There are 5 apples in a bowl. A hungry rabbit eats 2 of them. How many apples are left?",
+    a: 5, b: 2, op: "-", answer: 3,
+    objects: ["🍎","🍎","🍎","🍎","🍎"], objects2: []
+  },
+  {
+    emoji: "⭐", story: "Sam can see 8 stars in the sky. Then 3 stars hide behind a cloud. How many stars can Sam still see?",
+    a: 8, b: 3, op: "-", answer: 5,
+    objects: ["⭐","⭐","⭐","⭐","⭐","⭐","⭐","⭐"], objects2: []
+  },
+  {
+    emoji: "🐣", story: "There are 9 chicks in a nest. Then 4 chicks fly away. How many chicks are left in the nest?",
+    a: 9, b: 4, op: "-", answer: 5,
+    objects: ["🐣","🐣","🐣","🐣","🐣","🐣","🐣","🐣","🐣"], objects2: []
+  },
+  {
+    emoji: "🐠", story: "There are 10 fish in a tank. Then 3 fish are moved to another tank. How many fish are left?",
+    a: 10, b: 3, op: "-", answer: 7,
+    objects: ["🐠","🐠","🐠","🐠","🐠","🐠","🐠","🐠","🐠","🐠"], objects2: []
+  },
+  {
+    emoji: "🐝", story: "7 bees are buzzing around a hive. Then 5 bees fly inside. How many bees are still outside?",
+    a: 7, b: 5, op: "-", answer: 2,
+    objects: ["🐝","🐝","🐝","🐝","🐝","🐝","🐝"], objects2: []
+  },
+  {
+    emoji: "🐇", story: "There are 8 rabbits in a field. Then 6 rabbits hop away into the forest. How many rabbits are left?",
+    a: 8, b: 6, op: "-", answer: 2,
+    objects: ["🐇","🐇","🐇","🐇","🐇","🐇","🐇","🐇"], objects2: []
+  },
+  {
+    emoji: "🦋", story: "There are 9 butterflies on a flower bush. Then 4 of them fly away. How many butterflies are left?",
+    a: 9, b: 4, op: "-", answer: 5,
+    objects: ["🦋","🦋","🦋","🦋","🦋","🦋","🦋","🦋","🦋"], objects2: []
+  },
+  {
+    emoji: "🍭", story: "Chloe had 10 lollipops. She gave 4 to her friends. How many lollipops does Chloe have left?",
+    a: 10, b: 4, op: "-", answer: 6,
+    objects: ["🍭","🍭","🍭","🍭","🍭","🍭","🍭","🍭","🍭","🍭"], objects2: []
+  },
+  {
+    emoji: "🐟", story: "6 fish are swimming near the top of the pond. Then 1 fish dives down deep. How many fish are still near the top?",
+    a: 6, b: 1, op: "-", answer: 5,
+    objects: ["🐟","🐟","🐟","🐟","🐟","🐟"], objects2: []
+  },
+  {
+    emoji: "🍌", story: "There are 8 bananas on the table. The monkeys ate 5 of them. How many bananas are left?",
+    a: 8, b: 5, op: "-", answer: 3,
+    objects: ["🍌","🍌","🍌","🍌","🍌","🍌","🍌","🍌"], objects2: []
+  },
+  {
+    emoji: "🎃", story: "There are 7 pumpkins on the porch. Then 3 pumpkins roll away. How many pumpkins are left on the porch?",
+    a: 7, b: 3, op: "-", answer: 4,
+    objects: ["🎃","🎃","🎃","🎃","🎃","🎃","🎃"], objects2: []
+  },
+  {
+    emoji: "🌙", story: "There were 9 moons drawn on the paper. Owen rubbed out 6 of them. How many moons are left on the paper?",
+    a: 9, b: 6, op: "-", answer: 3,
+    objects: ["🌙","🌙","🌙","🌙","🌙","🌙","🌙","🌙","🌙"], objects2: []
+  },
+  {
+    emoji: "🐾", story: "10 puppies are in a playpen. Then 7 puppies go home with their owners. How many puppies are still in the playpen?",
+    a: 10, b: 7, op: "-", answer: 3,
+    objects: ["🐾","🐾","🐾","🐾","🐾","🐾","🐾","🐾","🐾","🐾"], objects2: []
+  },
+  {
+    emoji: "🍩", story: "There are 6 doughnuts in a box. Then 4 doughnuts are eaten at breakfast. How many doughnuts are left in the box?",
+    a: 6, b: 4, op: "-", answer: 2,
+    objects: ["🍩","🍩","🍩","🍩","🍩","🍩"], objects2: []
+  },
+  {
+    emoji: "🦜", story: "8 parrots are sitting in a tree. Then 2 parrots fly to another tree. How many parrots are left?",
+    a: 8, b: 2, op: "-", answer: 6,
+    objects: ["🦜","🦜","🦜","🦜","🦜","🦜","🦜","🦜"], objects2: []
+  },
+  {
+    emoji: "🌺", story: "There are 10 flowers in a bunch. Then 6 flowers are given away. How many flowers are left in the bunch?",
+    a: 10, b: 6, op: "-", answer: 4,
+    objects: ["🌺","🌺","🌺","🌺","🌺","🌺","🌺","🌺","🌺","🌺"], objects2: []
+  },
+  {
+    emoji: "🎯", story: "Nia had 9 turns at the ring toss game. She has used 5 of her turns. How many turns does she have left?",
+    a: 9, b: 5, op: "-", answer: 4,
+    objects: ["🎯","🎯","🎯","🎯","🎯","🎯","🎯","🎯","🎯"], objects2: []
+  },
+  {
+    emoji: "🐙", story: "There are 7 octopuses in the ocean. Then 7 of them swim away. How many octopuses are left?",
+    a: 7, b: 7, op: "-", answer: 0,
+    objects: ["🐙","🐙","🐙","🐙","🐙","🐙","🐙"], objects2: []
+  },
+  {
+    emoji: "🌊", story: "Sam built 10 sandcastles on the beach. The waves knocked down 8 of them. How many sandcastles are still standing?",
+    a: 10, b: 8, op: "-", answer: 2,
+    objects: ["🏰","🏰","🏰","🏰","🏰","🏰","🏰","🏰","🏰","🏰"], objects2: []
+  },
+  {
+    emoji: "🐘", story: "There are 4 elephants drinking from a river. Then 1 elephant walks away. How many elephants are still drinking?",
+    a: 4, b: 1, op: "-", answer: 3,
+    objects: ["🐘","🐘","🐘","🐘"], objects2: []
+  },
+  {
+    emoji: "🍕", story: "There were 8 slices of pizza on the table. The children ate 3 slices. How many slices are left?",
+    a: 8, b: 3, op: "-", answer: 5,
+    objects: ["🍕","🍕","🍕","🍕","🍕","🍕","🍕","🍕"], objects2: []
+  },
+  {
+    emoji: "🐊", story: "6 crocodiles are resting by the river. Then 5 crocodiles slide into the water. How many crocodiles are still resting?",
+    a: 6, b: 5, op: "-", answer: 1,
+    objects: ["🐊","🐊","🐊","🐊","🐊","🐊"], objects2: []
+  },
+  {
+    emoji: "🎠", story: "There are 9 children waiting for the merry-go-round. Then 3 children go home. How many children are still waiting?",
+    a: 9, b: 3, op: "-", answer: 6,
+    objects: ["👧","👧","👧","👧","👧","👧","👧","👧","👧"], objects2: []
+  },
+  {
+    emoji: "🍒", story: "There are 10 cherries on a plate. Maya eats 9 of them. How many cherries are left on the plate?",
+    a: 10, b: 9, op: "-", answer: 1,
+    objects: ["🍒","🍒","🍒","🍒","🍒","🍒","🍒","🍒","🍒","🍒"], objects2: []
+  },
+  {
+    emoji: "🚗", story: "There are 5 toy cars on the shelf. Then 2 cars fall off the shelf. How many toy cars are still on the shelf?",
+    a: 5, b: 2, op: "-", answer: 3,
+    objects: ["🚗","🚗","🚗","🚗","🚗"], objects2: []
+  }
+];
+
+const LEVEL1_COUNT = 8;
+const LEVEL2_COUNT = 8;
+const LEVEL1_PASS = 5;
+
+let level = 1;
+let questions = [];
+let currentQ = 0;
+let score = 0;
+let level1Score = 0;
+let level2Score = 0;
+let answered = false;
+let results = [];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function generateDistractors(q) {
+  const correct = `${q.a} ${q.op} ${q.b} = ${q.answer}`;
+  const pool = new Set([correct]);
+  const wrong_ops = ["+", "-"];
+  const offsets = [-2, -1, 1, 2];
+  wrong_ops.forEach(op => {
+    offsets.forEach(dA => {
+      offsets.forEach(dB => {
+        const na = Math.max(0, Math.min(10, q.a + dA));
+        const nb = Math.max(0, Math.min(10, q.b + dB));
+        const res = op === "+" ? na + nb : na - nb;
+        if (res >= 0 && res <= 10 && (na !== q.a || nb !== q.b || op !== q.op)) {
+          pool.add(`${na} ${op} ${nb} = ${res}`);
+        }
+      });
+    });
+    const swapRes = op === "+" ? q.a + q.b : q.a - q.b;
+    if (swapRes >= 0 && swapRes <= 10 && op !== q.op) pool.add(`${q.a} ${op} ${q.b} = ${swapRes}`);
+  });
+  const distractors = shuffle([...pool].filter(x => x !== correct)).slice(0, 3);
+  return shuffle([correct, ...distractors]);
+}
+
+function buildProgressDots() {
+  const dotsEl = document.getElementById("progressDots");
+  dotsEl.innerHTML = "";
+  for (let i = 0; i < questions.length; i++) {
+    const d = document.createElement("div");
+    d.className = "dot";
+    if (i < currentQ) d.classList.add(results[i] ? "correct" : "wrong");
+    else if (i === currentQ) d.classList.add("current");
+    dotsEl.appendChild(d);
+  }
+}
+
+function buildObjects(q) {
+  const el = document.getElementById("objectsDisplay");
+  el.innerHTML = "";
+  if (level === 2) return; // No emoji helpers in level 2
+  const g1 = document.createElement("div");
+  g1.className = "obj-group";
+  q.objects.forEach(o => { const s = document.createElement("span"); s.textContent = o; g1.appendChild(s); });
+  el.appendChild(g1);
+  if (q.objects2.length > 0) {
+    const div = document.createElement("span");
+    div.className = "obj-divider";
+    div.textContent = q.op === "+" ? "➕" : "➖";
+    el.appendChild(div);
+    const g2 = document.createElement("div");
+    g2.className = "obj-group";
+    q.objects2.forEach(o => { const s = document.createElement("span"); s.textContent = o; g2.appendChild(s); });
+    el.appendChild(g2);
+  }
+}
+
+function applyLevelStyle() {
+  const isL2 = level === 2;
+  document.getElementById("sceneCard").className = "scene-card" + (isL2 ? " lv2" : "");
+  document.getElementById("storyText").className = "story-box" + (isL2 ? " lv2" : "");
+  const badge = document.getElementById("levelBadge");
+  badge.className = "level-badge " + (isL2 ? "lv2" : "lv1");
+  badge.textContent = isL2 ? "🚀 Level 2" : "⭐ Level 1";
+  document.querySelector(".score-bar").style.borderColor = isL2 ? "#90CAF9" : "#FFD580";
+}
+
+function loadQuestion() {
+  answered = false;
+  const q = questions[currentQ];
+  applyLevelStyle();
+
+  document.getElementById("sceneEmoji").textContent = q.emoji;
+  document.getElementById("storyText").textContent = "Press the button to hear the story!";
+  document.getElementById("qDisplay").textContent = `${currentQ + 1} / ${questions.length}`;
+  document.getElementById("scoreDisplay").textContent = score;
+  document.getElementById("feedbackBanner").className = "feedback-banner";
+  document.getElementById("nextBtn").className = "next-btn";
+  document.getElementById("listenLabel").textContent = "Hear the story!";
+  document.getElementById("speechWave").className = "speech-wave";
+  document.getElementById("listenBtn").className = "listen-btn";
+
+  buildObjects(q);
+  buildProgressDots();
+
+  const choices = generateDistractors(q);
+  const grid = document.getElementById("choicesGrid");
+  grid.innerHTML = "";
+  choices.forEach(choice => {
+    const btn = document.createElement("button");
+    btn.className = "choice-btn";
+    btn.textContent = choice;
+    btn.onclick = () => checkAnswer(btn, choice, q);
+    grid.appendChild(btn);
+  });
+
+  setTimeout(() => readStory(), 800);
+}
+
+function readStory() {
+  const q = questions[currentQ];
+  document.getElementById("storyText").textContent = q.story;
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(q.story);
+  utter.rate = 0.85; utter.pitch = 1.1; utter.lang = "en-AU";
+  const btn = document.getElementById("listenBtn");
+  const wave = document.getElementById("speechWave");
+  const label = document.getElementById("listenLabel");
+  btn.className = "listen-btn playing";
+  wave.className = "speech-wave active";
+  label.textContent = "Listening...";
+  utter.onend = utter.onerror = () => {
+    btn.className = "listen-btn";
+    wave.className = "speech-wave";
+    label.textContent = "Hear it again!";
+  };
+  window.speechSynthesis.speak(utter);
+}
+
+function checkAnswer(btn, choice, q) {
+  if (answered) return;
+  answered = true;
+  window.speechSynthesis.cancel();
+  const correctStr = `${q.a} ${q.op} ${q.b} = ${q.answer}`;
+  const isCorrect = choice === correctStr;
+  results[currentQ] = isCorrect;
+  if (isCorrect) score++;
+  document.querySelectorAll(".choice-btn").forEach(b => {
+    b.style.pointerEvents = "none";
+    if (b.textContent === correctStr) b.classList.add("correct-answer");
+  });
+  if (!isCorrect) btn.classList.add("wrong-answer");
+  const feedback = document.getElementById("feedbackBanner");
+  if (isCorrect) {
+    feedback.className = "feedback-banner correct";
+    feedback.textContent = pickRandom(["🎉 Fantastic! That's exactly right!", "⭐ Brilliant! Well done!", "🥳 You got it! Amazing!", "🌟 Superstar! Correct!"]);
+  } else {
+    feedback.className = "feedback-banner wrong";
+    feedback.textContent = `❌ Good try! The answer was: ${correctStr}`;
+  }
+  buildProgressDots();
+  document.getElementById("scoreDisplay").textContent = score;
+  const nextBtn = document.getElementById("nextBtn");
+  nextBtn.className = "next-btn visible";
+  nextBtn.textContent = (currentQ === questions.length - 1) ? "See my score! 🏆" : "Next story ➜";
+  if ('speechSynthesis' in window) {
+    setTimeout(() => {
+      const msg = new SpeechSynthesisUtterance(isCorrect ? "Well done! That is correct!" : `Not quite. The answer was ${q.a} ${q.op === "+" ? "plus" : "minus"} ${q.b} equals ${q.answer}.`);
+      msg.rate = 0.9; msg.lang = "en-AU";
+      window.speechSynthesis.speak(msg);
+    }, 300);
+  }
+}
+
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function nextQuestion() {
+  window.speechSynthesis.cancel();
+  currentQ++;
+  if (currentQ >= questions.length) {
+    if (level === 1) {
+      level1Score = score;
+      if (score >= LEVEL1_PASS) {
+        showLevelUp();
+      } else {
+        showTryAgain();
+      }
+    } else {
+      level2Score = score - level1Score;
+      showEndScreen();
+    }
+  } else {
+    loadQuestion();
+  }
+}
+
+function showLevelUp() {
+  document.getElementById("gameArea").style.display = "none";
+  document.getElementById("levelupScreen").className = "levelup-screen visible";
+  document.getElementById("levelupScore").textContent = `You scored ${level1Score} out of ${LEVEL1_COUNT} on Level 1!`;
+  if ('speechSynthesis' in window) {
+    setTimeout(() => {
+      const msg = new SpeechSynthesisUtterance(`Amazing! You scored ${level1Score} out of ${LEVEL1_COUNT}. You have unlocked Level 2! Level 2 is trickier — the picture clues are gone. Just listen carefully!`);
+      msg.rate = 0.9; msg.lang = "en-AU";
+      window.speechSynthesis.speak(msg);
+    }, 500);
+  }
+}
+
+function showTryAgain() {
+  document.getElementById("gameArea").style.display = "none";
+  document.getElementById("tryagainScreen").className = "levelup-screen visible";
+  const wrong = LEVEL1_COUNT - level1Score;
+  document.getElementById("tryagainScore").textContent = `You scored ${level1Score} out of ${LEVEL1_COUNT} on Level 1. You need 5 or more to move up!`;
+  const warningEl = document.getElementById("tryagainWarning");
+  if (wrong > 3) {
+    warningEl.innerHTML = `<div class="teacher-warning"><span class="teacher-warning-icon">🍎</span><div class="teacher-warning-text"><strong>Check in with your teacher!</strong><br>You got ${wrong} questions wrong this time. Your teacher can sit with you and help you understand the word problems. Don't worry — everyone needs a little help sometimes!</div></div>`;
+  } else {
+    warningEl.innerHTML = "";
+  }
+  const speechText = wrong > 3
+    ? `You scored ${level1Score} out of ${LEVEL1_COUNT}. Keep practising! Please check in with your teacher — they can help you understand the word problems better.`
+    : `You scored ${level1Score} out of ${LEVEL1_COUNT}. Keep practising! You need 5 correct to unlock Level 2.`;
+  if ('speechSynthesis' in window) {
+    setTimeout(() => {
+      const msg = new SpeechSynthesisUtterance(speechText);
+      msg.rate = 0.9; msg.lang = "en-AU";
+      window.speechSynthesis.speak(msg);
+    }, 500);
+  }
+}
+
+function startLevel2() {
+  window.speechSynthesis.cancel();
+  level = 2;
+  currentQ = 0;
+  results = [];
+  // Pick questions not used in level 1 if possible, else reshuffle all
+  const used = questions.map(q => q.story);
+  const pool = ALL_QUESTIONS.filter(q => !used.includes(q.story));
+  questions = pool.length >= LEVEL2_COUNT
+    ? shuffle(pool).slice(0, LEVEL2_COUNT)
+    : shuffle(ALL_QUESTIONS).slice(0, LEVEL2_COUNT);
+
+  document.getElementById("levelupScreen").className = "levelup-screen";
+  document.getElementById("gameArea").style.display = "block";
+  loadQuestion();
+}
+
+function showEndScreen() {
+  document.getElementById("gameArea").style.display = "none";
+  const end = document.getElementById("endScreen");
+  end.className = "end-screen visible";
+  const total = level1Score + level2Score;
+  const totalMax = LEVEL1_COUNT + LEVEL2_COUNT;
+  const pct = total / totalMax;
+  const l2Wrong = LEVEL2_COUNT - level2Score;
+  let emoji, title;
+  if (pct === 1) { emoji = "🏆"; title = "Perfect score! You're a maths superstar!"; }
+  else if (pct >= 0.75) { emoji = "🌟"; title = "Amazing work! Nearly perfect!"; }
+  else if (pct >= 0.5) { emoji = "😊"; title = "Good job! Keep practising!"; }
+  else { emoji = "💪"; title = "Great effort! You're getting there!"; }
+  document.getElementById("endEmoji").textContent = emoji;
+  document.getElementById("endTitle").textContent = title;
+  document.getElementById("endScoreText").textContent = `Total: ${total} out of ${totalMax}`;
+  document.getElementById("endLevelScores").innerHTML =
+    `⭐ Level 1: ${level1Score} / ${LEVEL1_COUNT}<br>🚀 Level 2: ${level2Score} / ${LEVEL2_COUNT}`;
+  const warningEl = document.getElementById("endWarning");
+  if (l2Wrong > 3) {
+    warningEl.innerHTML = `<div class="teacher-warning"><span class="teacher-warning-icon">🍎</span><div class="teacher-warning-text"><strong>Check in with your teacher!</strong><br>You got ${l2Wrong} questions wrong on Level 2. Your teacher can sit with you and help you understand the word problems better. Don't worry — everyone needs a little help sometimes!</div></div>`;
+  } else {
+    warningEl.innerHTML = "";
+  }
+  const speechText = l2Wrong > 3
+    ? `${title} You got ${total} out of ${totalMax} across both levels. Please check in with your teacher — they can help you understand the word problems better.`
+    : `${title} You got ${total} out of ${totalMax} across both levels!`;
+  if ('speechSynthesis' in window) {
+    setTimeout(() => {
+      const msg = new SpeechSynthesisUtterance(speechText);
+      msg.rate = 0.9; msg.lang = "en-AU";
+      window.speechSynthesis.speak(msg);
+    }, 500);
+  }
+}
+
+function startGame() {
+  document.getElementById("introScreen").className = "intro-screen hidden";
+  document.getElementById("gameHeader").style.display = "block";
+  document.getElementById("scoreBar").style.display = "flex";
+  document.getElementById("gameArea").style.display = "block";
+  questions = shuffle(ALL_QUESTIONS).slice(0, LEVEL1_COUNT);
+  loadQuestion();
+}
+
+function restartGame() {
+  window.speechSynthesis.cancel();
+  level = 1; currentQ = 0; score = 0; level1Score = 0; level2Score = 0; results = [];
+  document.getElementById("endScreen").className = "end-screen";
+  document.getElementById("levelupScreen").className = "levelup-screen";
+  document.getElementById("tryagainScreen").className = "levelup-screen";
+  document.getElementById("gameArea").style.display = "none";
+  document.getElementById("gameHeader").style.display = "none";
+  document.getElementById("scoreBar").style.display = "none";
+  document.getElementById("introScreen").className = "intro-screen";
+}
+
+function generateStars() {
+  const bg = document.getElementById("starsBg");
+  const colors = ["#FFD580","#FFB347","#FFEAA0","#FFC878"];
+  for (let i = 0; i < 18; i++) {
+    const s = document.createElement("div");
+    s.className = "star";
+    const size = 6 + Math.random() * 12;
+    s.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;background:${colors[Math.floor(Math.random()*colors.length)]};animation-delay:${Math.random()*3}s;animation-duration:${2+Math.random()*2}s;`;
+    bg.appendChild(s);
+  }
+}
+
+generateStars();
+
+</script>
+</body>
+</html>
