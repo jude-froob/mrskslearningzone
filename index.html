@@ -32,7 +32,8 @@
 
   .nav { position: relative; display: flex; align-items: center; justify-content: space-between; padding: 30px 56px 0; }
   .word { font-family: var(--font-display); font-weight: 800; font-size: 1.6rem; color: var(--ink); }
-  .signpost { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 14px; background: var(--paper); font-family: var(--font-display); font-weight: 700; font-size: 0.92rem; color: var(--ink); box-shadow: 0 6px 0 rgba(43,36,64,0.14); text-decoration: none; white-space: nowrap; }
+  .signpost { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 14px; background: var(--paper); font-family: var(--font-display); font-weight: 700; font-size: 0.92rem; color: var(--ink); box-shadow: 0 6px 0 rgba(43,36,64,0.14); text-decoration: none; white-space: nowrap; transition: background 0.2s; }
+  .signpost:hover, .signpost:focus-visible { background: var(--yellow); }
 
   .hero-copy { position: relative; text-align: center; padding: 46px 40px 30px; }
   .hero-copy h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.9rem, 5vw, 3rem); line-height: 1.1; margin: 0 0 12px; }
@@ -49,6 +50,17 @@
   .stop { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 12px; width: 190px; text-decoration: none; color: var(--ink); }
   .stop-blob { width: 128px; height: 128px; border-radius: 46% 54% 55% 45% / 50% 46% 54% 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 0 rgba(43,36,64,0.14); flex-shrink: 0; }
   .stop-blob svg { width: 48px; height: 48px; stroke: var(--ink); fill: none; stroke-width: 2; }
+  .stop:hover .stop-blob, .stop:focus-visible .stop-blob { animation: stop-bounce 0.6s cubic-bezier(.36,1.9,.4,1) both; }
+  @keyframes stop-bounce {
+    0% { transform: scale(1, 1) translateY(0); }
+    30% { transform: scale(1.14, 0.86) translateY(-2px); }
+    50% { transform: scale(0.94, 1.1) translateY(-16px); }
+    70% { transform: scale(1.06, 0.96) translateY(-4px); }
+    100% { transform: scale(1, 1) translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stop:hover .stop-blob, .stop:focus-visible .stop-blob { animation: none; }
+  }
   .stop-label { font-family: var(--font-display); font-weight: 700; font-size: 0.98rem; text-align: center; background: var(--paper); padding: 7px 16px; border-radius: 999px; box-shadow: 0 4px 0 rgba(43,36,64,0.1); }
 
   /* ZONES */
