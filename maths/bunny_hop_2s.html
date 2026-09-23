@@ -285,6 +285,42 @@ h1 {
     .numpad { grid-template-columns: repeat(3, 1fr); }
     .seq-box { min-width: 48px; height: 48px; font-size: 1.1em; }
 }
+
+/* iPad landscape / short-viewport: switch the game screen to two columns
+   so the numpad and submit button are reachable without scrolling */
+@media (min-width: 700px) and (max-height: 900px) {
+    .page-wrap { padding: 10px; align-items: flex-start; }
+    .container { padding: 20px 30px; max-width: 900px; }
+    h1 { font-size: 2em; margin-bottom: 4px; }
+    .subtitle { margin-bottom: 20px; }
+    .level-selection { margin: 20px 0; }
+
+    #gameScreen.active {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+            "header header"
+            "counter counter"
+            "progress progress"
+            "rule answer"
+            "sequence numpad"
+            "feedback numpad"
+            "submit numpad";
+        column-gap: 24px;
+        row-gap: 8px;
+        align-items: start;
+        text-align: left;
+    }
+    #gameScreen .game-header { grid-area: header; margin-bottom: 0; }
+    #gameScreen .question-counter { grid-area: counter; margin-bottom: 0; text-align: center; }
+    #gameScreen .meadow-path { grid-area: progress; margin: 0; padding: 12px; }
+    #gameScreen .rule-badge { grid-area: rule; margin: 0; align-self: center; }
+    #gameScreen .sequence-display { grid-area: sequence; margin: 0; justify-content: flex-start; align-content: flex-start; }
+    #gameScreen .feedback { grid-area: feedback; margin: 0; text-align: left; }
+    #gameScreen .answer-box { grid-area: answer; margin: 0; align-self: center; }
+    #gameScreen .numpad { grid-area: numpad; margin: 0; }
+    #gameScreen .submit-btn { grid-area: submit; }
+}
 </style>
 </head>
 <body>
