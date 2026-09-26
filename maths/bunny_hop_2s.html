@@ -78,6 +78,9 @@ h1 {
 .level-btn.level4 { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); box-shadow: 0 10px 25px rgba(253, 160, 133, 0.35); }
 .level-btn.level4:hover { box-shadow: 0 15px 35px rgba(253, 160, 133, 0.55); }
 
+.level-btn.level5 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); box-shadow: 0 10px 25px rgba(56, 249, 215, 0.35); grid-column: 1 / -1; }
+.level-btn.level5:hover { box-shadow: 0 15px 35px rgba(56, 249, 215, 0.55); }
+
 .level-label { font-size: 0.78em; opacity: 0.95; margin-top: 8px; }
 
 /* Game Screen */
@@ -226,6 +229,27 @@ h1 {
 .num-btn.del-btn { border-color: #f5576c; color: #f5576c; font-size: 1.05em; }
 .num-btn.del-btn:hover { background: #f5576c; color: white; }
 
+/* Rule-choice buttons (Level 5) */
+.rule-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin: 16px 0 18px;
+}
+.rule-choice-btn {
+    padding: 20px 10px;
+    font-size: 1.4em;
+    font-weight: 900;
+    border: 3px solid #43a047;
+    background: white;
+    color: #43a047;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.rule-choice-btn:hover { background: #43a047; color: white; }
+.rule-choice-btn.selected { background: #43a047; color: white; box-shadow: 0 0 0 4px rgba(67, 160, 71, 0.3); }
+
 .submit-btn {
     background: linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%);
     color: white;
@@ -319,6 +343,7 @@ h1 {
     #gameScreen .feedback { grid-area: feedback; margin: 0; text-align: left; }
     #gameScreen .answer-box { grid-area: answer; margin: 0; align-self: center; }
     #gameScreen .numpad { grid-area: numpad; margin: 0; }
+    #gameScreen .rule-options { grid-area: numpad; margin: 0; align-self: center; }
     #gameScreen .submit-btn { grid-area: submit; }
 }
 </style>
@@ -356,6 +381,10 @@ h1 {
                 <div>Level 4</div>
                 <div class="level-label">Wild Meadow! &middot; Start Anywhere</div>
             </button>
+            <button class="level-btn level5" onclick="startLevel(5)">
+                <div>Level 5</div>
+                <div class="level-label">Rule Detective! &middot; Choose the Rule</div>
+            </button>
         </div>
     </div>
 
@@ -382,6 +411,13 @@ h1 {
         <div class="feedback" id="feedback"></div>
 
         <div class="answer-box" id="answerBox">?</div>
+
+        <div class="rule-options" id="ruleOptions" style="display:none">
+            <button class="rule-choice-btn" onclick="selectRuleChoice(this)">+2</button>
+            <button class="rule-choice-btn" onclick="selectRuleChoice(this)">-2</button>
+            <button class="rule-choice-btn" onclick="selectRuleChoice(this)">+1</button>
+            <button class="rule-choice-btn" onclick="selectRuleChoice(this)">-1</button>
+        </div>
 
         <div class="numpad" id="numpad">
             <button class="num-btn" onclick="numPress('1')">1</button>
@@ -425,13 +461,15 @@ h1 {
     const SEQ_LEN = 5;
     const QUESTIONS_PER_LEVEL = 8;
     const PASS_THRESHOLD = 6;
+    const TOTAL_LEVELS = 5;
 
     const LEVEL_INFO = [
         null,
         { name: 'Level 1', desc: 'Counting Forwards' },
         { name: 'Level 2', desc: 'Counting Backwards' },
         { name: 'Level 3', desc: 'Forwards & Backwards' },
-        { name: 'Level 4', desc: 'Start Anywhere' }
+        { name: 'Level 4', desc: 'Start Anywhere' },
+        { name: 'Level 5', desc: 'Choose the Rule' }
     ];
 
     let currentLevel = 1;
@@ -440,6 +478,8 @@ h1 {
     let sequence = [];
     let blankIndex = 0;
     let correctAnswer = 0;
+    let correctRule = '';
+    let selectedRuleChoice = null;
     let direction = 1;
     let answerInput = '';
     let waitingForAnswer = false;
@@ -498,20 +538,64 @@ h1 {
             sequence.push(start + direction * i * SKIP);
         }
 
-        blankIndex = randInt(1, SEQ_LEN - 1);
-        correctAnswer = sequence[blankIndex];
+        correctRule = `${direction === 1 ? '+' : '-'}${SKIP}`;
         answerInput = '';
+        selectedRuleChoice = null;
         waitingForAnswer = true;
 
+        const ruleBadge = document.getElementById('ruleBadge');
+        const answerBox = document.getElementById('answerBox');
+        const numpad = document.getElementById('numpad');
+        const ruleOptions = document.getElementById('ruleOptions');
+
+        if (currentLevel === 5) {
+            blankIndex = -1;
+            correctAnswer = null;
+            ruleBadge.style.display = 'none';
+            answerBox.style.display = 'none';
+            numpad.style.display = 'none';
+            ruleOptions.style.display = 'grid';
+            setupRuleChoices();
+        } else {
+            blankIndex = randInt(1, SEQ_LEN - 1);
+            correctAnswer = sequence[blankIndex];
+            ruleBadge.style.display = 'inline-block';
+            answerBox.style.display = 'block';
+            numpad.style.display = 'grid';
+            ruleOptions.style.display = 'none';
+            renderRule();
+            updateAnswerDisplay();
+            disableNumpad(false);
+        }
+
         renderSequence();
-        renderRule();
-        updateAnswerDisplay();
-        disableNumpad(false);
         document.getElementById('submitBtn').disabled = true;
         document.getElementById('feedback').textContent = '';
         document.getElementById('feedback').className = 'feedback';
         document.getElementById('questionCounter').textContent =
             `Question ${questionsAnswered + 1} of ${QUESTIONS_PER_LEVEL}`;
+    }
+
+    function setupRuleChoices() {
+        const options = [`+${SKIP}`, `-${SKIP}`, '+1', '-1'];
+        for (let i = options.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [options[i], options[j]] = [options[j], options[i]];
+        }
+        const buttons = document.querySelectorAll('.rule-choice-btn');
+        buttons.forEach((btn, i) => {
+            btn.textContent = options[i];
+            btn.classList.remove('selected');
+            btn.style.pointerEvents = 'all';
+        });
+    }
+
+    function selectRuleChoice(btnEl) {
+        if (!waitingForAnswer) return;
+        document.querySelectorAll('.rule-choice-btn').forEach(b => b.classList.remove('selected'));
+        btnEl.classList.add('selected');
+        selectedRuleChoice = btnEl.textContent;
+        document.getElementById('submitBtn').disabled = false;
     }
 
     function renderSequence() {
@@ -567,23 +651,36 @@ h1 {
     }
 
     function submitAnswer() {
-        if (!waitingForAnswer || answerInput === '') return;
+        if (!waitingForAnswer) return;
+        if (currentLevel === 5 && selectedRuleChoice === null) return;
+        if (currentLevel !== 5 && answerInput === '') return;
         waitingForAnswer = false;
-        disableNumpad(true);
         document.getElementById('submitBtn').disabled = true;
 
-        const given = parseInt(answerInput, 10);
         const feedback = document.getElementById('feedback');
+        let isCorrect;
 
-        if (given === correctAnswer) {
+        if (currentLevel === 5) {
+            isCorrect = selectedRuleChoice === correctRule;
+            document.querySelectorAll('.rule-choice-btn').forEach(b => { b.style.pointerEvents = 'none'; });
+        } else {
+            disableNumpad(true);
+            isCorrect = parseInt(answerInput, 10) === correctAnswer;
+        }
+
+        if (isCorrect) {
             score++;
             document.getElementById('score').textContent = score;
             document.getElementById('progressBar').style.width =
                 (score / QUESTIONS_PER_LEVEL) * 100 + '%';
-            feedback.textContent = '🐰 Correct! Great hopping!';
+            feedback.textContent = currentLevel === 5
+                ? `🐰 Correct! The rule is ${correctRule}!`
+                : '🐰 Correct! Great hopping!';
             feedback.className = 'feedback correct';
         } else {
-            feedback.textContent = `Not quite! The answer was ${correctAnswer}.`;
+            feedback.textContent = currentLevel === 5
+                ? `Not quite! The rule was ${correctRule}.`
+                : `Not quite! The answer was ${correctAnswer}.`;
             feedback.className = 'feedback incorrect';
         }
 
@@ -606,7 +703,7 @@ h1 {
         const nextBtn = document.getElementById('nextLevelBtn');
         const advMsg = document.getElementById('advancementMessage');
         const canAdvance = score >= PASS_THRESHOLD;
-        const isMaxLevel = currentLevel >= 4;
+        const isMaxLevel = currentLevel >= TOTAL_LEVELS;
 
         if (canAdvance && !isMaxLevel) {
             nextBtn.disabled = false;
@@ -644,7 +741,7 @@ h1 {
     }
 
     function nextLevel() {
-        if (currentLevel < 4) startLevel(currentLevel + 1);
+        if (currentLevel < TOTAL_LEVELS) startLevel(currentLevel + 1);
     }
 
     function backToLevels() {
