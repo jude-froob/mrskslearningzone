@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Place Explorer – Natural, Managed or Constructed?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Andika:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#22253A;
+    --natural:#2E7D32;   --natural-soft:#DDF1DA;
+    --managed:#B45309;   --managed-soft:#FDEBCF;
+    --constructed:#4A4E8C; --constructed-soft:#E2E3F5;
+    --good:#1F8A3A; --bad:#C62828;
+    --font:"Andika","Lexend","Century Gothic","Segoe UI",Arial,sans-serif;
+    --head:"Baloo 2","Andika","Century Gothic","Segoe UI",Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{
+    height:100dvh;display:grid;grid-template-rows:auto auto minmax(0,1fr);
+    font-family:var(--font);color:var(--ink);
+    background:#FFF8EC;
+    user-select:none;-webkit-user-select:none;
+  }
+
+  /* ---------- top bar ---------- */
+  header{
+    display:flex;align-items:center;gap:2vmin;
+    padding:1.2vmin 2vmin .6vmin;
+  }
+  .title{flex:1;min-width:0}
+  .title h1{
+    margin:0;font-family:var(--head);font-weight:800;line-height:1;
+    font-size:clamp(24px,4.2vmin,58px);
+  }
+  .title h1 .n{color:var(--natural)} .title h1 .m{color:var(--managed)} .title h1 .c{color:var(--constructed)}
+  .title p{margin:.4vmin 0 0;font-size:clamp(16px,2.2vmin,30px)}
+  .stars{
+    font-family:var(--head);font-weight:800;font-size:clamp(20px,3.2vmin,44px);
+    background:#fff;border:3px solid #F2C94C;border-radius:999px;padding:.2vmin 2vmin;white-space:nowrap;
+  }
+  .stars small{font-family:var(--font);font-weight:700;font-size:.55em;color:#6b6b7b;margin-left:.6vmin}
+  .tool{
+    width:clamp(52px,7vmin,84px);height:clamp(52px,7vmin,84px);border-radius:50%;
+    border:3px solid var(--ink);background:#fff;cursor:pointer;
+    font-size:clamp(22px,3.4vmin,40px);display:grid;place-items:center;padding:0;color:var(--ink);
+  }
+  .tool:active{transform:scale(.94)}
+
+  /* ---------- play area ---------- */
+  main{
+    display:grid;grid-template-rows:minmax(0,1.15fr) minmax(0,1fr);gap:1.6vmin;
+    padding:.6vmin 2vmin 2vmin;min-height:0;
+  }
+  .stage{display:flex;align-items:center;justify-content:center;gap:3vmin;min-height:0;position:relative}
+  .card-slot{height:100%;aspect-ratio:4/5;position:relative;flex:0 0 auto}
+  .card{
+    position:absolute;inset:0;background:#fff;border-radius:3vmin;
+    border:.6vmin solid var(--ink);box-shadow:0 1vmin 0 rgba(34,37,58,.25);
+    display:grid;grid-template-rows:minmax(0,1fr) auto;padding:1.4vmin;gap:.8vmin;
+    touch-action:none;cursor:grab;z-index:5;
+  }
+  .card.dragging{cursor:grabbing;box-shadow:0 2.4vmin 3vmin rgba(34,37,58,.35);transition:none}
+  .card.back{transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
+  #cardArt{min-height:0;height:100%}
+  .card svg{width:100%;height:100%;display:block;pointer-events:none}
+  .card .word{
+    text-align:center;font-weight:700;font-size:clamp(22px,4vmin,56px);line-height:1.05;pointer-events:none;
+  }
+  .card.enter{animation:enter .45s cubic-bezier(.3,1.5,.5,1)}
+  @keyframes enter{from{transform:scale(.3) rotate(-12deg);opacity:0}to{transform:none;opacity:1}}
+  .card.shake{animation:shake .45s}
+  @keyframes shake{20%,60%{transform:translateX(-2vmin)}40%,80%{transform:translateX(2vmin)}}
+
+  .side{display:flex;flex-direction:column;gap:1.4vmin;max-width:38vw;min-width:0}
+  .bubble{
+    background:#fff;border:.4vmin solid var(--ink);border-radius:2.4vmin;padding:1.4vmin 2vmin;
+    font-size:clamp(18px,2.8vmin,38px);font-weight:700;line-height:1.2;position:relative;
+  }
+  .bubble.good{border-color:var(--good);background:#E7F6EA}
+  .bubble.bad{border-color:var(--bad);background:#FDECEC}
+  .bubble .icon{font-size:1.2em;margin-right:.4em}
+  .say{
+    align-self:flex-start;display:flex;align-items:center;gap:1vmin;
+    min-height:60px;padding:1vmin 2.4vmin;border-radius:999px;border:3px solid var(--ink);background:#FFE58A;
+    font-family:var(--font);font-weight:700;font-size:clamp(18px,2.6vmin,34px);cursor:pointer;color:var(--ink);
+  }
+  .progress{font-size:clamp(16px,2.2vmin,28px);font-weight:700;color:#55586e}
+
+  /* ---------- the three lands ---------- */
+  .lands{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.6vmin;min-height:0}
+  .land{
+    display:grid;grid-template-rows:auto minmax(0,1fr);border-radius:2.4vmin;overflow:hidden;
+    border:.6vmin solid var(--c);background:#fff;cursor:pointer;position:relative;min-height:0;
+    transition:transform .15s, box-shadow .15s;
+  }
+  .land[data-cat=natural]{--c:var(--natural);--soft:var(--natural-soft)}
+  .land[data-cat=managed]{--c:var(--managed);--soft:var(--managed-soft)}
+  .land[data-cat=constructed]{--c:var(--constructed);--soft:var(--constructed-soft)}
+  .land-head{
+    background:var(--c);color:#fff;display:flex;align-items:center;gap:1.2vmin;padding:.8vmin 1.4vmin;
+  }
+  .land-head .badge{width:clamp(36px,6vmin,76px);height:clamp(36px,6vmin,76px);flex:0 0 auto;background:#fff;border-radius:50%;padding:.5vmin}
+  .land-head .badge svg{width:100%;height:100%;display:block}
+  .land-head b{display:block;font-family:var(--head);font-weight:800;font-size:clamp(22px,3.8vmin,52px);line-height:1}
+  .land-head span{display:block;font-size:clamp(14px,2.1vmin,28px);font-weight:700;line-height:1.1}
+  .scene{position:relative;min-height:0;padding:1vmin;
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:.8vmin}
+  .land[data-cat=natural] .scene{background:linear-gradient(#C8EBF8 0 50%,#9AD68A 50%)}
+  .land[data-cat=managed] .scene{background:linear-gradient(#D6EEF8 0 50%,transparent 50%),repeating-linear-gradient(90deg,#E6D27A 0 3vmin,#D8C163 3vmin 6vmin)}
+  .land[data-cat=constructed] .scene{background:linear-gradient(#DCE7F2 0 50%,#B9BEC6 50%)}
+  .scene .empty{
+    position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;
+    font-weight:700;font-size:clamp(16px,2.4vmin,32px);color:rgba(34,37,58,.55);
+  }
+  .thumb{background:rgba(255,255,255,.85);border-radius:1.2vmin;padding:.4vmin;min-height:0;min-width:0;
+    animation:pop .45s cubic-bezier(.3,1.6,.5,1);position:relative}
+  .thumb svg{position:absolute;inset:.4vmin;width:calc(100% - .8vmin);height:calc(100% - .8vmin);display:block}
+  @keyframes pop{from{transform:scale(0)}to{transform:none}}
+  .land.hover{transform:translateY(-1vmin);box-shadow:0 0 0 .8vmin var(--soft),0 1vmin 2vmin rgba(0,0,0,.2)}
+  .land.right{animation:glow .7s}
+  @keyframes glow{0%,100%{box-shadow:none}40%{box-shadow:0 0 0 1.2vmin #8BE09B}}
+  .land.wrong{animation:wobble .45s}
+  @keyframes wobble{25%{transform:rotate(-1.5deg)}75%{transform:rotate(1.5deg)}}
+  .land.hint{animation:hint 1s infinite}
+  @keyframes hint{50%{transform:translateY(-1.2vmin);box-shadow:0 0 0 1vmin #FFE58A}}
+  .mark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3;pointer-events:none;
+    font-size:clamp(60px,14vmin,180px);font-weight:700;animation:markfade 1s forwards}
+  @keyframes markfade{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}25%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
+
+  /* ---------- overlay screens ---------- */
+  .panel{
+    background:#fff;border:.6vmin solid var(--ink);border-radius:3vmin;padding:2vmin 3vmin;text-align:center;
+    max-width:92%;max-height:100%;display:flex;flex-direction:column;align-items:center;gap:1.4vmin;justify-content:center;
+  }
+  .panel h2{margin:0;font-family:var(--head);font-weight:800;font-size:clamp(26px,5vmin,66px);line-height:1}
+  .panel p{margin:0;font-size:clamp(18px,2.8vmin,38px);font-weight:700}
+  .btns{display:flex;gap:2vmin;flex-wrap:wrap;justify-content:center}
+  .big{
+    min-height:clamp(60px,8vmin,100px);padding:0 3.4vmin;border-radius:999px;border:.5vmin solid var(--ink);
+    font-family:var(--head);font-weight:800;font-size:clamp(20px,3.4vmin,46px);cursor:pointer;color:var(--ink);
+    background:#FFE58A;box-shadow:0 .7vmin 0 var(--ink);
+  }
+  .big.alt{background:#BFE3FF}
+  .big:active{transform:translateY(.5vmin);box-shadow:0 .2vmin 0 var(--ink)}
+  .hidden{display:none !important}
+
+  .confetti{position:fixed;width:1.4vmin;height:1.4vmin;border-radius:.3vmin;pointer-events:none;z-index:50}
+
+  /* Back banner (site-wide pattern), kept slim so the game still fits one screen */
+  .backbar{background:#CDEFF6;position:relative;overflow:hidden;padding:5px 22px}
+</style>
+</head>
+<body>
+
+<div class="backbar">
+  <div style="position:absolute;top:3px;left:36%;width:64px;height:18px;background:#fff;border-radius:999px;opacity:.85;"></div>
+  <div style="position:absolute;top:12px;left:42%;width:40px;height:14px;background:#fff;border-radius:999px;opacity:.85;"></div>
+  <a href="index.html" style="position:relative;z-index:1;display:inline-flex;align-items:center;gap:8px;font-family:'Baloo 2',system-ui,sans-serif;font-weight:800;font-size:1rem;color:#2B2440;text-decoration:none;">
+    <span style="font-size:1.2rem;line-height:1;">&larr;</span>Back to Mrs K's Learning Zone
+  </a>
+</div>
+
+<header>
+  <div class="title">
+    <h1>Place Explorer: <span class="n">Natural</span>, <span class="m">Managed</span> or <span class="c">Constructed</span>?</h1>
+    <p>Drag the picture to the right place – or tap the place.</p>
+  </div>
+  <div class="stars" id="stars" title="Right first time">⭐ 0<small id="outof"></small></div>
+  <button class="tool" id="soundBtn" aria-label="Sound on or off" title="Sound on/off">🔊</button>
+  <button class="tool" id="restartBtn" aria-label="Start again" title="Start again">↺</button>
+  <button class="tool" id="fsBtn" aria-label="Full screen" title="Full screen">⛶</button>
+</header>
+
+<main>
+  <section class="stage" id="stage">
+    <!-- start screen -->
+    <div class="panel" id="startPanel">
+      <h2>Let's explore our places! 🧭</h2>
+      <p>Is it made by nature, looked after by people, or built by people?</p>
+      <div class="btns">
+        <button class="big" data-count="12">Quick game · 12</button>
+        <button class="big alt" data-count="24">Big game · 24</button>
+      </div>
+    </div>
+
+    <!-- playing -->
+    <div class="card-slot hidden" id="cardSlot">
+      <div class="card" id="card"><div id="cardArt"></div><div class="word" id="cardWord"></div></div>
+    </div>
+    <div class="side hidden" id="side">
+      <div class="progress" id="progress"></div>
+      <div class="bubble" id="bubble">Where does it belong?</div>
+      <button class="say" id="sayBtn">🔈 Say it</button>
+    </div>
+
+    <!-- finished -->
+    <div class="panel hidden" id="endPanel">
+      <h2 id="endTitle">Well done, explorer! 🎉</h2>
+      <p id="endText"></p>
+      <div class="btns">
+        <button class="big" data-count="12">Quick game · 12</button>
+        <button class="big alt" data-count="24">Big game · 24</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="lands" id="lands"></section>
+</main>
+
+<script>
+/* =====================================================================
+   TEACHER EDIT ZONE
+   - CATEGORIES: the three kinds of features (name + short tip).
+   - ITEMS: every picture card. "cat" must be natural, managed or constructed.
+     "art" picks a picture from ART below. "phrase" is the start of the
+     spoken/written sentence, e.g. "A river is" or "Rocks are".
+   To add a card, copy a line and change it (reuse any art name).
+   ===================================================================== */
+const CATEGORIES = [
+  { id:'natural',     name:'Natural',     tip:'Made by nature',                badge:'forest'   },
+  { id:'managed',     name:'Managed',     tip:'Nature looked after by people', badge:'veggies'  },
+  { id:'constructed', name:'Constructed', tip:'Built by people',               badge:'house'    },
+];
+
+const ITEMS = [
+  // Natural – made by nature
+  { name:'mountain',        cat:'natural',     art:'mountain',   phrase:'A mountain is' },
+  { name:'river',           cat:'natural',     art:'river',      phrase:'A river is' },
+  { name:'beach',           cat:'natural',     art:'beach',      phrase:'A beach is' },
+  { name:'forest',          cat:'natural',     art:'forest',     phrase:'A forest is' },
+  { name:'waterfall',       cat:'natural',     art:'waterfall',  phrase:'A waterfall is' },
+  { name:'cave',            cat:'natural',     art:'cave',       phrase:'A cave is' },
+  { name:'ocean',           cat:'natural',     art:'ocean',      phrase:'The ocean is' },
+  { name:'rocks',           cat:'natural',     art:'rocks',      phrase:'Rocks are' },
+  // Managed – nature looked after (changed and cared for) by people
+  { name:'farm crops',      cat:'managed',     art:'crops',      phrase:'Farm crops are' },
+  { name:'vegetable garden',cat:'managed',     art:'veggies',    phrase:'A vegetable garden is' },
+  { name:'park',            cat:'managed',     art:'park',       phrase:'A park is' },
+  { name:'orchard',         cat:'managed',     art:'orchard',    phrase:'An orchard is' },
+  { name:'sheep paddock',   cat:'managed',     art:'paddock',    phrase:'A sheep paddock is' },
+  { name:'flower garden',   cat:'managed',     art:'flowers',    phrase:'A flower garden is' },
+  { name:'national park',   cat:'managed',     art:'natpark',    phrase:'A national park is' },
+  { name:'pine plantation', cat:'managed',     art:'plantation', phrase:'A pine plantation is' },
+  // Constructed – built by people
+  { name:'house',           cat:'constructed', art:'house',      phrase:'A house is' },
+  { name:'school',          cat:'constructed', art:'school',     phrase:'A school is' },
+  { name:'road',            cat:'constructed', art:'road',       phrase:'A road is' },
+  { name:'bridge',          cat:'constructed', art:'bridge',     phrase:'A bridge is' },
+  { name:'shop',            cat:'constructed', art:'shop',       phrase:'A shop is' },
+  { name:'playground',      cat:'constructed', art:'playground', phrase:'A playground is' },
+  { name:'lighthouse',      cat:'constructed', art:'lighthouse', phrase:'A lighthouse is' },
+  { name:'tall building',   cat:'constructed', art:'tower',      phrase:'A tall building is' },
+];
+
+const REASON = {
+  natural:     'natural – made by nature!',
+  managed:     'managed – nature looked after by people!',
+  constructed: 'constructed – built by people!',
+};
+const HINT = 'Think: did nature make it, do people look after it, or did people build it?';
+/* ===================== END OF TEACHER EDIT ZONE ===================== */
+
+/* ---------- pictures (inline SVG, 100×100) ---------- */
+const SKY = '<rect width="100" height="100" rx="12" fill="#E3F4FB"/>';
+const ART = {
+  mountain: SKY+'<rect y="76" width="100" height="24" rx="0" fill="#7CC46A"/><polygon points="4,80 38,20 72,80" fill="#8C7F95"/><polygon points="38,20 28,38 34,35 38,40 43,35 48,38" fill="#fff"/><polygon points="42,80 70,36 98,80" fill="#A99DB0"/><polygon points="70,36 62,49 67,46 71,51 75,47 78,49" fill="#fff"/><circle cx="84" cy="16" r="8" fill="#F6C945"/>',
+  river: SKY+'<path d="M0 34 Q30 22 55 32 T100 30 V100 H0Z" fill="#7CC46A"/><path d="M44 31 C30 48 70 54 52 70 S28 88 40 100 H66 C56 88 82 74 70 62 S52 44 58 31Z" fill="#3FA7E0"/><path d="M50 50 q6 3 10 0 M46 82 q6 3 10 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="18" cy="56" r="7" fill="#4E9A45"/><rect x="16.5" y="60" width="3" height="8" fill="#8A5A2B"/><circle cx="84" cy="80" r="7" fill="#4E9A45"/><rect x="82.5" y="84" width="3" height="8" fill="#8A5A2B"/>',
+  beach: SKY+'<circle cx="80" cy="20" r="10" fill="#F6C945"/><rect y="42" width="100" height="26" fill="#3FA7E0"/><path d="M10 52 q5 -4 10 0 M50 48 q5 -4 10 0 M76 56 q5 -4 10 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M0 64 Q25 56 50 63 T100 60 V100 H0Z" fill="#F4D58D"/><path d="M30 84 l6 -8 l6 8z" fill="#F08A7E"/><circle cx="70" cy="86" r="3" fill="#E9B872"/>',
+  forest: SKY+'<rect y="80" width="100" height="20" fill="#7CC46A"/><rect x="18" y="62" width="5" height="22" fill="#8A5A2B"/><polygon points="20,22 6,66 34,66" fill="#2F8A3E"/><rect x="48" y="58" width="5" height="26" fill="#8A5A2B"/><polygon points="50,14 34,62 66,62" fill="#3EA04C"/><rect x="78" y="62" width="5" height="22" fill="#8A5A2B"/><polygon points="80,26 66,66 94,66" fill="#2F8A3E"/>',
+  waterfall: SKY+'<path d="M0 18 H38 V100 H0Z" fill="#8F7A66"/><path d="M62 18 H100 V100 H62Z" fill="#8F7A66"/><rect x="0" y="14" width="40" height="8" rx="3" fill="#5DAE55"/><rect x="60" y="14" width="40" height="8" rx="3" fill="#5DAE55"/><rect x="38" y="18" width="24" height="64" fill="#5BBCEB"/><path d="M44 24 V76 M50 22 V80 M56 26 V74" stroke="#fff" stroke-width="2" stroke-dasharray="8 6"/><ellipse cx="50" cy="86" rx="34" ry="10" fill="#3FA7E0"/><path d="M34 84 q4 -5 8 0 M58 84 q4 -5 8 0" stroke="#fff" stroke-width="2.5" fill="none"/>',
+  cave: SKY+'<rect y="82" width="100" height="18" fill="#7CC46A"/><path d="M4 86 Q10 30 50 24 Q90 30 96 86Z" fill="#9A8C7E"/><path d="M30 86 Q32 50 50 48 Q68 50 70 86Z" fill="#2D2A33"/><path d="M14 60 l8 -4 M78 50 l7 4 M60 34 l6 -3" stroke="#7D7064" stroke-width="3" stroke-linecap="round"/>',
+  ocean: SKY+'<rect y="34" width="100" height="66" fill="#2F8FD0"/><path d="M0 40 q12.5 -8 25 0 t25 0 t25 0 t25 0 V100 H0Z" fill="#3FA7E0"/><path d="M0 62 q12.5 -8 25 0 t25 0 t25 0 t25 0 V100 H0Z" fill="#2F8FD0"/><path d="M0 80 q12.5 -8 25 0 t25 0 t25 0 t25 0 V100 H0Z" fill="#2577B5"/><path d="M8 40 q6 -5 12 0 M58 62 q6 -5 12 0 M30 80 q6 -5 12 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M70 30 q6 -10 14 -4 q-4 2 -6 6z" fill="#4A5A6A"/>',
+  rocks: SKY+'<rect y="70" width="100" height="30" fill="#7CC46A"/><path d="M8 84 Q10 50 36 50 Q58 52 60 84Z" fill="#8E8A86"/><path d="M48 86 Q54 62 72 62 Q92 64 94 86Z" fill="#A6A19B"/><path d="M26 88 Q30 74 40 74 Q50 76 50 88Z" fill="#7A7570"/><path d="M22 62 l8 4 M66 70 l8 2" stroke="#6E6A66" stroke-width="2.5" stroke-linecap="round"/>',
+
+  crops: SKY+'<path d="M0 40 H100 V100 H0Z" fill="#E9C84A"/><g stroke="#C79A1E" stroke-width="3">'+[48,58,70,84].map(y=>`<line x1="0" y1="${y}" x2="100" y2="${y}"/>`).join('')+'</g><g fill="#B5862A">'+[10,28,46,64,82].map(x=>`<ellipse cx="${x}" cy="44" rx="3" ry="6"/>`).join('')+'</g><g stroke="#8A5A2B" stroke-width="3"><line x1="0" y1="34" x2="100" y2="34"/><line x1="10" y1="28" x2="10" y2="42"/><line x1="40" y1="28" x2="40" y2="42"/><line x1="70" y1="28" x2="70" y2="42"/></g><circle cx="84" cy="14" r="7" fill="#F6C945"/>',
+  veggies: SKY+'<rect y="40" width="100" height="60" fill="#8A5A2B"/>'+[50,70,90].map(y=>`<rect x="6" y="${y-6}" width="88" height="10" rx="5" fill="#6E4520"/>`).join('')+[14,34,54,74].map(x=>`<g><path d="M${x} 44 l-4 -10 M${x} 44 l0 -12 M${x} 44 l4 -10" stroke="#3EA04C" stroke-width="3" stroke-linecap="round"/><polygon points="${x-3},44 ${x+3},44 ${x},54" fill="#F07B2A"/></g>`).join('')+[20,46,72].map(x=>`<circle cx="${x}" cy="68" r="7" fill="#7CC46A"/><circle cx="${x}" cy="68" r="3.5" fill="#B8E28A"/>`).join('')+[30,60,86].map(x=>`<circle cx="${x}" cy="88" r="5" fill="#D9343A"/><path d="M${x} 83 v-4" stroke="#3EA04C" stroke-width="2.5"/>`).join(''),
+  park: SKY+'<rect y="56" width="100" height="44" fill="#6CC060"/><path d="M40 100 Q50 76 80 56 H92 Q64 78 60 100Z" fill="#E8D7A9"/><rect x="21" y="38" width="5" height="26" fill="#8A5A2B"/><circle cx="23.5" cy="32" r="16" fill="#3EA04C"/><rect x="6" y="80" width="26" height="4" rx="2" fill="#A0693B"/><rect x="6" y="74" width="26" height="3" rx="1.5" fill="#A0693B"/><rect x="9" y="84" width="3" height="8" fill="#5A3B1E"/><rect x="26" y="84" width="3" height="8" fill="#5A3B1E"/><circle cx="80" cy="16" r="7" fill="#F6C945"/>',
+  orchard: SKY+'<rect y="60" width="100" height="40" fill="#7CC46A"/>'+[[18,50],[50,50],[82,50],[34,78],[66,78]].map(([x,y])=>`<rect x="${x-2}" y="${y}" width="4" height="14" fill="#8A5A2B"/><circle cx="${x}" cy="${y-6}" r="11" fill="#3EA04C"/><circle cx="${x-5}" cy="${y-8}" r="2.6" fill="#E0393E"/><circle cx="${x+4}" cy="${y-3}" r="2.6" fill="#E0393E"/><circle cx="${x+2}" cy="${y-12}" r="2.6" fill="#E0393E"/>`).join(''),
+  paddock: SKY+'<rect y="50" width="100" height="50" fill="#8DCF6E"/><g stroke="#8A5A2B" stroke-width="3"><line x1="0" y1="56" x2="100" y2="56"/><line x1="0" y1="64" x2="100" y2="64"/>'+[8,32,56,80].map(x=>`<line x1="${x}" y1="50" x2="${x}" y2="70"/>`).join('')+'</g>'+[[30,84],[68,80]].map(([x,y])=>`<g><rect x="${x-8}" y="${y+4}" width="3" height="8" fill="#333"/><rect x="${x+5}" y="${y+4}" width="3" height="8" fill="#333"/><ellipse cx="${x}" cy="${y}" rx="13" ry="9" fill="#fff" stroke="#ccc"/><circle cx="${x-6}" cy="${y-5}" r="5" fill="#fff"/><circle cx="${x+5}" cy="${y-6}" r="5" fill="#fff"/><ellipse cx="${x+14}" cy="${y-3}" rx="5" ry="4" fill="#333"/></g>`).join(''),
+  flowers: SKY+'<rect y="60" width="100" height="40" fill="#8A5A2B"/><rect y="56" width="100" height="8" fill="#6CC060"/>'+[[12,'#E84B8A'],[30,'#F6C945'],[48,'#9B5DE5'],[66,'#E0393E'],[84,'#F07B2A']].map(([x,c],i)=>{const y=i%2?44:36;return `<path d="M${x} ${y} V70" stroke="#3EA04C" stroke-width="3"/><path d="M${x} 60 q6 -6 9 -2 q-5 4 -9 2" fill="#3EA04C"/><g fill="${c}"><circle cx="${x}" cy="${y-6}" r="5"/><circle cx="${x}" cy="${y+6}" r="5"/><circle cx="${x-6}" cy="${y}" r="5"/><circle cx="${x+6}" cy="${y}" r="5"/></g><circle cx="${x}" cy="${y}" r="3.5" fill="#FFE58A"/>`}).join(''),
+  natpark: SKY+'<path d="M0 60 Q30 44 60 54 T100 50 V100 H0Z" fill="#6CB45E"/><polygon points="70,12 56,52 84,52" fill="#2F8A3E"/><polygon points="88,22 76,56 100,56" fill="#3EA04C"/><polygon points="16,24 4,60 28,60" fill="#3EA04C"/><rect x="34" y="56" width="4" height="30" fill="#6E4520"/><rect x="56" y="56" width="4" height="30" fill="#6E4520"/><rect x="26" y="42" width="42" height="22" rx="3" fill="#7A4A21" stroke="#F4D58D" stroke-width="2"/><text x="47" y="51" font-size="7.5" font-weight="700" fill="#F4D58D" text-anchor="middle" font-family="Arial">NATIONAL</text><text x="47" y="60" font-size="7.5" font-weight="700" fill="#F4D58D" text-anchor="middle" font-family="Arial">PARK</text>',
+  plantation: SKY+'<rect y="44" width="100" height="56" fill="#9CCB6A"/>'+[[14,52],[38,52],[62,52],[86,52],[14,80],[38,80],[62,80],[86,80]].map(([x,y])=>`<rect x="${x-1.5}" y="${y+8}" width="3" height="8" fill="#8A5A2B"/><polygon points="${x},${y-18} ${x-9},${y+9} ${x+9},${y+9}" fill="#2F7A3A"/>`).join(''),
+
+  house: SKY+'<rect y="82" width="100" height="18" fill="#7CC46A"/><rect x="20" y="46" width="60" height="38" fill="#F4D58D"/><polygon points="12,48 50,18 88,48" fill="#C2413A"/><rect x="66" y="22" width="8" height="16" fill="#8A3A33"/><rect x="44" y="60" width="14" height="24" rx="2" fill="#7A4A21"/><circle cx="54" cy="73" r="1.5" fill="#F6C945"/><rect x="26" y="56" width="12" height="12" fill="#8FD3F4" stroke="#fff" stroke-width="2"/><rect x="64" y="56" width="12" height="12" fill="#8FD3F4" stroke="#fff" stroke-width="2"/>',
+  school: SKY+'<rect y="84" width="100" height="16" fill="#7CC46A"/><rect x="6" y="44" width="88" height="42" fill="#D9654B"/><polygon points="30,44 50,26 70,44" fill="#9B3B2E"/><rect x="49" y="8" width="2" height="22" fill="#555"/><path d="M51 8 h14 v9 h-14z" fill="#3A7BD5"/><rect x="42" y="64" width="16" height="22" fill="#7A4A21"/><rect x="12" y="52" width="10" height="10" fill="#8FD3F4"/><rect x="26" y="52" width="10" height="10" fill="#8FD3F4"/><rect x="64" y="52" width="10" height="10" fill="#8FD3F4"/><rect x="78" y="52" width="10" height="10" fill="#8FD3F4"/><rect x="12" y="68" width="10" height="10" fill="#8FD3F4"/><rect x="78" y="68" width="10" height="10" fill="#8FD3F4"/><circle cx="50" cy="38" r="4" fill="#F6C945"/>',
+  road: SKY+'<rect y="40" width="100" height="60" fill="#7CC46A"/><polygon points="42,40 58,40 96,100 4,100" fill="#5E6168"/><polygon points="49,44 51,44 52,52 48,52" fill="#fff"/><polygon points="48,60 52,60 53,72 47,72" fill="#fff"/><polygon points="46.5,82 53.5,82 55,98 45,98" fill="#fff"/><rect x="78" y="44" width="3" height="20" fill="#777"/><circle cx="79.5" cy="42" r="6" fill="#E0393E" stroke="#fff" stroke-width="1.5"/>',
+  bridge: SKY+'<rect y="66" width="100" height="34" fill="#3FA7E0"/><path d="M8 80 q6 -4 12 0 M70 88 q6 -4 12 0" stroke="#fff" stroke-width="2.5" fill="none"/><rect x="0" y="58" width="12" height="42" fill="#7CC46A"/><rect x="88" y="58" width="12" height="42" fill="#7CC46A"/><path d="M0 44 H100 V54 H90 Q50 22 10 54 H0Z" fill="#B0745A"/><path d="M14 58 Q50 30 86 58 V64 H80 Q50 40 20 64 H14Z" fill="#8C5A44"/><rect x="0" y="40" width="100" height="5" fill="#6B4433"/>',
+  shop: SKY+'<rect y="86" width="100" height="14" fill="#B9BEC6"/><rect x="10" y="30" width="80" height="58" fill="#FFF1D6"/><rect x="10" y="20" width="80" height="12" fill="#3A7BD5"/><text x="50" y="29.5" font-size="9" font-weight="700" fill="#fff" text-anchor="middle" font-family="Arial">SHOP</text>'+[0,1,2,3,4,5,6,7].map(i=>`<path d="M${10+i*10} 32 h10 v8 a5 5 0 0 1 -10 0z" fill="${i%2?'#fff':'#E0393E'}"/>`).join('')+'<rect x="16" y="52" width="34" height="24" fill="#8FD3F4" stroke="#7A4A21" stroke-width="2"/><circle cx="26" cy="68" r="4" fill="#E0393E"/><circle cx="38" cy="69" r="4" fill="#F6C945"/><rect x="58" y="52" width="24" height="36" fill="#7A4A21"/>',
+  playground: SKY+'<rect y="80" width="100" height="20" fill="#E8D7A9"/><g stroke="#E0393E" stroke-width="4" stroke-linecap="round"><line x1="8" y1="82" x2="20" y2="30"/><line x1="44" y1="82" x2="32" y2="30"/><line x1="18" y1="30" x2="34" y2="30"/></g><g stroke="#555" stroke-width="1.5"><line x1="22" y1="30" x2="22" y2="62"/><line x1="30" y1="30" x2="30" y2="62"/></g><rect x="19" y="62" width="14" height="4" rx="2" fill="#3A7BD5"/><rect x="62" y="40" width="4" height="42" fill="#3A7BD5"/><rect x="74" y="40" width="4" height="42" fill="#3A7BD5"/><g stroke="#3A7BD5" stroke-width="2"><line x1="62" y1="52" x2="78" y2="52"/><line x1="62" y1="64" x2="78" y2="64"/></g><rect x="60" y="38" width="20" height="5" fill="#F6C945"/><path d="M78 40 Q86 46 92 80 H98 Q92 42 80 36Z" fill="#F6C945"/>',
+  lighthouse: SKY+'<rect y="76" width="100" height="24" fill="#3FA7E0"/><path d="M20 82 Q24 66 50 66 Q78 66 82 82Z" fill="#8E8A86"/><polygon points="40,70 60,70 56,26 44,26" fill="#fff"/><polygon points="41.5,58 58.5,58 57.5,48 42.5,48" fill="#E0393E"/><polygon points="43.2,38 56.8,38 56,28 44,28" fill="#E0393E"/><rect x="42" y="18" width="16" height="10" fill="#FFE58A" stroke="#333" stroke-width="1.5"/><polygon points="40,18 60,18 50,8" fill="#333"/><path d="M58 20 L96 10 V30Z M42 20 L4 10 V30Z" fill="#FFE58A" opacity=".55"/><rect x="47" y="60" width="6" height="10" fill="#7A4A21"/>',
+  tower: SKY+'<rect y="88" width="100" height="12" fill="#B9BEC6"/><rect x="8" y="48" width="22" height="42" fill="#9AA3AE"/><rect x="34" y="10" width="34" height="80" fill="#5C6B80"/><rect x="72" y="36" width="22" height="54" fill="#8792A0"/>'+[0,1,2,3,4,5,6,7,8].map(r=>[0,1,2].map(c=>`<rect x="${38+c*10}" y="${15+r*8}" width="6" height="5" fill="${(r+c)%3?'#FFE58A':'#BFE3FF'}"/>`).join('')).join('')+[0,1,2,3].map(r=>`<rect x="12" y="${54+r*8}" width="5" height="4" fill="#FFE58A"/><rect x="21" y="${54+r*8}" width="5" height="4" fill="#FFE58A"/><rect x="76" y="${42+r*10}" width="5" height="5" fill="#BFE3FF"/><rect x="85" y="${42+r*10}" width="5" height="5" fill="#BFE3FF"/>`).join(''),
+};
+const svg = (name, label) => `<svg viewBox="0 0 100 100" role="img" aria-label="${label||name}">${ART[name]}</svg>`;
+
+/* ---------- sound + speech ---------- */
+let soundOn = true, actx = null;
+function tone(freqs, dur=0.12, type='sine'){
+  if(!soundOn) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    freqs.forEach((f,i)=>{
+      const o=actx.createOscillator(), g=actx.createGain(), t=actx.currentTime+i*dur;
+      o.type=type; o.frequency.value=f; o.connect(g); g.connect(actx.destination);
+      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.25,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+dur*1.6); o.start(t); o.stop(t+dur*1.8);
+    });
+  }catch(e){}
+}
+const yay = () => tone([523,659,784,1047],0.1,'triangle');
+const nope = () => tone([220,180],0.16,'square');
+function speak(text){
+  if(!soundOn || !('speechSynthesis' in window)) return;
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text); u.rate=0.9; u.pitch=1.1;
+    const v=speechSynthesis.getVoices().find(v=>/en-(AU|GB)/i.test(v.lang)); if(v) u.voice=v;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ---------- build the lands ---------- */
+const $ = id => document.getElementById(id);
+const landsEl = $('lands');
+CATEGORIES.forEach(c=>{
+  const el=document.createElement('div');
+  el.className='land'; el.dataset.cat=c.id; el.setAttribute('role','button'); el.tabIndex=0;
+  el.setAttribute('aria-label',`${c.name}: ${c.tip}`);
+  el.innerHTML=`<div class="land-head"><div class="badge">${svg(c.badge)}</div><div><b>${c.name}</b><span>${c.tip}</span></div></div>
+    <div class="scene"><div class="empty">Drop here</div></div>`;
+  el.addEventListener('click',()=>{ if(!dragMoved) choose(c.id); });
+  el.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();choose(c.id);} });
+  landsEl.appendChild(el);
+});
+const landOf = id => landsEl.querySelector(`.land[data-cat="${id}"]`);
+
+/* ---------- game state ---------- */
+let deck=[], idx=0, stars=0, tries=0, busy=false, playing=false;
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function start(count){
+  // take an equal share from each category, then shuffle
+  const per=Math.ceil(count/CATEGORIES.length);
+  deck=shuffle(CATEGORIES.flatMap(c=>shuffle(ITEMS.filter(i=>i.cat===c.id)).slice(0,per))).slice(0,count);
+  idx=0; stars=0; playing=true;
+  landsEl.querySelectorAll('.scene').forEach(s=>s.innerHTML='<div class="empty">Drop here</div>');
+  const maxPer=Math.max(...CATEGORIES.map(c=>deck.filter(d=>d.cat===c.id).length));
+  landsEl.querySelectorAll('.scene').forEach(s=>{ s.style.gridTemplateColumns=`repeat(${maxPer>4?4:2},minmax(0,1fr))`; });
+  $('startPanel').classList.add('hidden'); $('endPanel').classList.add('hidden');
+  $('cardSlot').classList.remove('hidden'); $('side').classList.remove('hidden');
+  updateStars(); showCard();
+}
+
+function showCard(){
+  const it=deck[idx]; tries=0; busy=false;
+  $('cardArt').innerHTML=svg(it.art,it.name);
+  $('cardArt').style.minHeight='0';
+  $('cardWord').textContent=it.name[0].toUpperCase()+it.name.slice(1);
+  const card=$('card'); card.style.transform=''; card.classList.remove('enter','shake'); void card.offsetWidth; card.classList.add('enter');
+  $('progress').textContent=`Card ${idx+1} of ${deck.length}`;
+  setBubble('Where does it belong?','');
+  landsEl.querySelectorAll('.land').forEach(l=>l.classList.remove('hint'));
+  speak(it.name);
+}
+
+function setBubble(text,kind){
+  const b=$('bubble'); b.className='bubble'+(kind?' '+kind:'');
+  b.innerHTML=(kind==='good'?'<span class="icon">✓</span>':kind==='bad'?'<span class="icon">✗</span>':'')+text;
+}
+function updateStars(){ $('stars').firstChild.nodeValue='⭐ '+stars; $('outof').textContent=playing?' / '+deck.length:''; }
+
+function mark(land,ch,color){
+  const m=document.createElement('div'); m.className='mark'; m.textContent=ch; m.style.color=color;
+  land.appendChild(m); setTimeout(()=>m.remove(),1000);
+}
+
+function choose(catId){
+  if(!playing||busy) return;
+  const it=deck[idx], land=landOf(catId), card=$('card');
+  tries++;
+  if(catId===it.cat){
+    busy=true; if(tries===1) stars++; updateStars();
+    yay(); land.classList.remove('right'); void land.offsetWidth; land.classList.add('right');
+    mark(land,'✓','#1F8A3A'); confetti(land);
+    const sentence=`${it.phrase} ${REASON[it.cat]}`;
+    setBubble(sentence,'good'); speak(sentence);
+    const scene=land.querySelector('.scene'); scene.querySelector('.empty')?.remove();
+    const t=document.createElement('div'); t.className='thumb'; t.innerHTML=svg(it.art,it.name); scene.appendChild(t);
+    landsEl.querySelectorAll('.land').forEach(l=>l.classList.remove('hint'));
+    card.style.visibility='hidden';
+    setTimeout(()=>{ card.style.visibility=''; idx++; idx<deck.length?showCard():finish(); },1900);
+  }else{
+    nope(); land.classList.remove('wrong'); void land.offsetWidth; land.classList.add('wrong');
+    mark(land,'✗','#C62828');
+    card.style.transform=''; card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+    if(tries>=2){ setBubble('Look for the bouncing place! '+HINT,'bad'); landOf(it.cat).classList.add('hint'); }
+    else setBubble('Not quite! '+HINT,'bad');
+    speak('Not quite. Try again!');
+  }
+}
+
+function finish(){
+  playing=false; busy=true;
+  $('cardSlot').classList.add('hidden'); $('side').classList.add('hidden');
+  const n=deck.length;
+  $('endTitle').textContent = stars===n ? 'Super explorer! 🏆' : stars>=n*0.7 ? 'Well done, explorer! 🎉' : 'Good exploring! 🧭';
+  $('endText').textContent=`You got ${stars} out of ${n} right first time. Look at the places you sorted!`;
+  $('endPanel').classList.remove('hidden');
+  $('stars').firstChild.nodeValue='⭐ '+stars; $('outof').textContent=' / '+n;
+  tone([523,659,784,659,784,1047],0.13,'triangle');
+  speak(`Well done! You got ${stars} out of ${n} right first time.`);
+  landsEl.querySelectorAll('.land').forEach(confetti);
+}
+
+function confetti(el){
+  const r=el.getBoundingClientRect(), cols=['#E0393E','#F6C945','#3A7BD5','#3EA04C','#E84B8A','#9B5DE5'];
+  for(let i=0;i<18;i++){
+    const p=document.createElement('div'); p.className='confetti';
+    p.style.background=cols[i%cols.length];
+    p.style.left=(r.left+r.width/2)+'px'; p.style.top=(r.top+r.height/3)+'px';
+    document.body.appendChild(p);
+    const a=Math.random()*Math.PI*2, d=60+Math.random()*120;
+    p.animate([{transform:'translate(0,0) rotate(0)',opacity:1},
+               {transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d-40}px) rotate(${Math.random()*720}deg)`,opacity:0}],
+              {duration:900+Math.random()*400,easing:'cubic-bezier(.2,.8,.4,1)'}).onfinish=()=>p.remove();
+  }
+}
+
+/* ---------- dragging (pointer events: mouse, touch, pen) ---------- */
+let dragId=null, sx=0, sy=0, dragMoved=false;
+const card=$('card');
+function landAt(x,y){
+  return [...landsEl.querySelectorAll('.land')].find(l=>{const r=l.getBoundingClientRect();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom;});
+}
+card.addEventListener('pointerdown',e=>{
+  if(!playing||busy||dragId!==null) return;
+  dragId=e.pointerId; sx=e.clientX; sy=e.clientY; dragMoved=false;
+  card.setPointerCapture(e.pointerId); card.classList.remove('back','enter','shake'); card.classList.add('dragging');
+});
+card.addEventListener('pointermove',e=>{
+  if(e.pointerId!==dragId) return;
+  const dx=e.clientX-sx, dy=e.clientY-sy;
+  if(Math.abs(dx)+Math.abs(dy)>8) dragMoved=true;
+  card.style.transform=`translate(${dx}px,${dy}px) rotate(${dx/40}deg) scale(.8)`;
+  const over=landAt(e.clientX,e.clientY);
+  landsEl.querySelectorAll('.land').forEach(l=>l.classList.toggle('hover',l===over));
+});
+function endDrag(e){
+  if(e.pointerId!==dragId) return;
+  dragId=null; card.classList.remove('dragging');
+  landsEl.querySelectorAll('.land').forEach(l=>l.classList.remove('hover'));
+  const over=dragMoved?landAt(e.clientX,e.clientY):null;
+  card.classList.add('back'); card.style.transform='';
+  if(over) choose(over.dataset.cat);
+  else if(!dragMoved) speak(deck[idx].name);   // a simple tap on the card reads it aloud
+  setTimeout(()=>{dragMoved=false;},0);
+}
+card.addEventListener('pointerup',endDrag);
+card.addEventListener('pointercancel',endDrag);
+
+/* ---------- buttons ---------- */
+document.querySelectorAll('[data-count]').forEach(b=>b.addEventListener('click',()=>start(+b.dataset.count)));
+$('sayBtn').addEventListener('click',()=>playing&&speak(deck[idx].name));
+$('soundBtn').addEventListener('click',()=>{
+  soundOn=!soundOn; $('soundBtn').textContent=soundOn?'🔊':'🔇';
+  if(!soundOn && 'speechSynthesis' in window) speechSynthesis.cancel();
+});
+$('restartBtn').addEventListener('click',()=>{
+  playing=false; busy=false;
+  if('speechSynthesis' in window) speechSynthesis.cancel();
+  landsEl.querySelectorAll('.scene').forEach(s=>s.innerHTML='<div class="empty">Drop here</div>');
+  landsEl.querySelectorAll('.land').forEach(l=>l.classList.remove('hint'));
+  $('cardSlot').classList.add('hidden'); $('side').classList.add('hidden'); $('endPanel').classList.add('hidden');
+  $('startPanel').classList.remove('hidden'); stars=0; updateStars();
+});
+$('fsBtn').addEventListener('click',()=>{
+  const d=document, el=d.documentElement;
+  if(d.fullscreenElement||d.webkitFullscreenElement){(d.exitFullscreen||d.webkitExitFullscreen).call(d);}
+  else{(el.requestFullscreen||el.webkitRequestFullscreen).call(el);}
+});
+if('speechSynthesis' in window) speechSynthesis.getVoices();
+</script>
+</body>
+</html>
