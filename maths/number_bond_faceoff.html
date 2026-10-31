@@ -116,35 +116,48 @@ body{
 /* ── RACE TRACK (middle) ── */
 .track{
   position:relative;
-  height:clamp(120px,22vh,280px);
+  height:clamp(170px,30vh,400px);
   display:grid;
-  grid-template-rows:1fr 1fr;
-  gap:4px;
-  padding:1vmin 2vmin;
-  background:linear-gradient(var(--grass),#9ED97F 50%,var(--grass));
+  grid-template-rows:1fr 1.25fr 1.25fr 1fr;
+  padding:0 2vmin;
+  background:
+    repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 60px,transparent 60px 120px),
+    linear-gradient(#78C858,#62B444);
 }
+/* each player's countryside; the two skies meet in the middle */
+.scene-strip{position:relative;overflow:hidden;margin:0 -2vmin}
+.scene-strip.top{transform:rotate(180deg)}
+.scene-strip svg{position:absolute;inset:0;width:100%;height:100%}
+.drift{animation:drift linear infinite}
+@keyframes drift{from{transform:translateX(-400px)}to{transform:translateX(3600px)}}
+.blades{transform-box:view-box;transform-origin:330px 132px;animation:spin 9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
 .lane{
   display:grid;
-  grid-template-columns:clamp(14px,2.4vmin,24px) minmax(0,1fr) clamp(20px,3.4vmin,34px);
+  grid-template-columns:clamp(14px,2.4vmin,24px) minmax(0,1fr) clamp(22px,3.4vmin,36px);
   min-height:0;
-  border-radius:12px;
+  margin:clamp(5px,.8vh,10px) 0;
+  border-radius:8px;
   overflow:hidden;
-  box-shadow:0 2px 0 rgba(0,0,0,.12);
+  box-shadow:0 3px 0 rgba(60,40,20,.25), inset 0 3px 0 rgba(0,0,0,.08);
 }
 .lane.top{transform:rotate(180deg)}   /* so the top player's animal runs left-to-right for them */
-.start{background:var(--col)}
+.start{background:var(--col);border-right:4px solid #fff}
 .run{
   position:relative;
   background:
-    repeating-linear-gradient(90deg,transparent 0 calc(100%/var(--steps) - 3px),rgba(255,255,255,.45) calc(100%/var(--steps) - 3px) calc(100%/var(--steps))),
-    linear-gradient(var(--dirt),var(--dirt-dark));
+    repeating-linear-gradient(90deg,transparent 0 calc(100%/var(--steps) - 2px),rgba(255,255,255,.35) calc(100%/var(--steps) - 2px) calc(100%/var(--steps))),
+    radial-gradient(circle at 20% 30%,rgba(120,80,40,.25) 0 2px,transparent 3px) 0 0/37px 23px,
+    radial-gradient(circle at 70% 70%,rgba(255,240,210,.35) 0 1.5px,transparent 2.5px) 0 0/29px 19px,
+    linear-gradient(#E2B57A,var(--dirt) 40%,var(--dirt-dark));
 }
-.finish{background:repeating-conic-gradient(#222 0 25%,#fff 0 50%) 0 0/12px 12px}
+.finish{border-left:3px solid #fff;background:repeating-conic-gradient(#222 0 25%,#fff 0 50%) 0 0/12px 12px}
 .runner{
   position:absolute;top:50%;
   left:calc(var(--p) * (100% - 1.1em));
   transform:translateY(-50%);
-  font-size:clamp(30px,8vh,90px);
+  font-size:clamp(26px,5.5vh,70px);
   line-height:1;
   transition:left .55s cubic-bezier(.4,1.4,.6,1);
   filter:drop-shadow(0 3px 0 rgba(0,0,0,.18));
@@ -245,7 +258,7 @@ body{
 @keyframes fall{to{transform:translateY(112vh) rotate(720deg)}}
 
 @media (prefers-reduced-motion:reduce){
-  .runner,.runner.hop span,.side.won .animal,.side .big.pop,.panel.wrong .bond{animation:none;transition:none}
+  .runner,.runner.hop span,.side.won .animal,.side .big.pop,.panel.wrong .bond,.drift,.blades{animation:none;transition:none}
 }
 </style>
 </head>
@@ -255,6 +268,8 @@ body{
 
 <section class="track" id="track">
   <div class="lane top" id="lane1"></div>
+  <div class="scene-strip top" id="scene1"></div>
+  <div class="scene-strip" id="scene0"></div>
   <div class="lane" id="lane0"></div>
   <div class="tools">
     <button class="tool" id="muteBtn" aria-label="Sound on or off">🔊</button>
@@ -264,6 +279,94 @@ body{
 </section>
 
 <div class="half"><div class="panel" id="panel0" data-player="0"></div></div>
+
+<template id="sceneTpl">
+      <svg class="scene" viewBox="0 0 3200 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+        <defs>
+          <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#5FB8EA"/><stop offset=".7" stop-color="#BFE8F8"/><stop offset="1" stop-color="#E4F6FC"/>
+          </linearGradient>
+          <linearGradient id="mtnG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#8FAFD9"/><stop offset="1" stop-color="#BCD5EE"/>
+          </linearGradient>
+          <linearGradient id="woodG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#D9A066"/><stop offset="1" stop-color="#B57A43"/>
+          </linearGradient>
+        </defs>
+        <rect width="3200" height="300" fill="url(#skyG)"/>
+
+        <!-- sun -->
+        <g transform="translate(2620 70)">
+          <circle r="80" fill="#FFF6C2" opacity=".45"/>
+          <circle r="58" fill="#FFF0A0" opacity=".6"/>
+          <circle r="40" fill="#FFD640"/>
+        </g>
+
+        <!-- drifting clouds -->
+        <g class="drift" style="animation-duration:90s;animation-delay:-20s">
+          <g fill="#fff"><ellipse cx="0" cy="60" rx="70" ry="22"/><circle cx="-25" cy="48" r="26"/><circle cx="20" cy="40" r="32"/></g>
+        </g>
+        <g class="drift" style="animation-duration:120s;animation-delay:-75s">
+          <g fill="#fff" opacity=".9"><ellipse cx="0" cy="105" rx="55" ry="17"/><circle cx="-15" cy="95" r="22"/><circle cx="18" cy="92" r="18"/></g>
+        </g>
+        <g class="drift" style="animation-duration:100s;animation-delay:-55s">
+          <g fill="#fff"><ellipse cx="0" cy="40" rx="80" ry="24"/><circle cx="-30" cy="28" r="28"/><circle cx="22" cy="20" r="36"/></g>
+        </g>
+
+        <g class="drift" style="animation-duration:110s;animation-delay:-5s">
+          <g fill="#fff" opacity=".9"><ellipse cx="0" cy="75" rx="60" ry="19"/><circle cx="-20" cy="64" r="22"/><circle cx="16" cy="58" r="27"/></g>
+        </g>
+        <g class="drift" style="animation-duration:95s;animation-delay:-40s">
+          <g fill="#fff"><ellipse cx="0" cy="50" rx="65" ry="20"/><circle cx="-22" cy="40" r="24"/><circle cx="18" cy="34" r="29"/></g>
+        </g>
+
+        <g id="land">
+        <!-- far mountains -->
+        <path fill="url(#mtnG)" d="M0 205 L120 120 L205 172 L320 82 L430 178 L540 112 L650 182 L780 96 L900 172 L1010 116 L1130 186 L1260 92 L1380 172 L1500 122 L1600 165 L1600 300 L0 300Z"/>
+        <g id="snow" fill="#fff"></g>
+
+        <!-- far hills -->
+        <path fill="#A9DC8C" d="M0 232 C150 182 300 200 420 216 C560 232 650 176 820 190 C980 205 1080 226 1220 200 C1360 176 1480 196 1600 206 L1600 300 L0 300Z"/>
+        <g id="farTrees"></g>
+
+        <!-- windmill -->
+        <g transform="translate(0 0)">
+          <path d="M318 214 L322 136 L338 136 L342 214Z" fill="#F4EDE1" stroke="#9C8A73" stroke-width="2"/>
+          <path d="M314 140 L330 118 L346 140Z" fill="#C8574E"/>
+          <rect x="325" y="194" width="10" height="20" rx="5" fill="#8B5A2B"/>
+          <g class="blades" fill="#FFFDF6" stroke="#9C8A73" stroke-width="2">
+            <rect x="326" y="82" width="8" height="50" rx="2"/>
+            <rect x="326" y="132" width="8" height="50" rx="2"/>
+            <rect x="280" y="128" width="50" height="8" rx="2"/>
+            <rect x="330" y="128" width="50" height="8" rx="2"/>
+            <circle cx="330" cy="132" r="6" fill="#C8574E"/>
+          </g>
+        </g>
+
+        <!-- middle hills -->
+        <path fill="#8ED06D" d="M0 256 C120 226 260 230 380 248 C520 268 640 228 800 236 C960 244 1060 262 1200 244 C1340 226 1480 238 1600 250 L1600 300 L0 300Z"/>
+
+        <!-- red barn -->
+        <g transform="translate(1110 196)">
+          <path d="M-6 26 L40 -6 L86 26Z" fill="#8E3B36"/>
+          <rect x="2" y="24" width="76" height="40" fill="#C8574E"/>
+          <rect x="28" y="36" width="24" height="28" fill="#fff"/>
+          <path d="M28 36 L52 64 M52 36 L28 64" stroke="#C8574E" stroke-width="3"/>
+          <rect x="10" y="32" width="12" height="10" fill="#FFF4D6"/>
+          <rect x="58" y="32" width="12" height="10" fill="#FFF4D6"/>
+        </g>
+        <g id="midTrees"></g>
+
+        <!-- front grass, bushes, fence, flowers -->
+        <rect y="268" width="1600" height="32" fill="#7CCB5B"/>
+        <g id="bushes" fill="#5FB048"></g>
+        <g id="fence"></g>
+        <g id="flowers"></g>
+        </g>
+        <!-- the same countryside, mirrored, for wide screens -->
+        <use href="#land" transform="translate(3200 0) scale(-1 1)"/>
+      </svg>
+</template>
 
 <div class="overlay" id="startScreen">
   <div class="card">
@@ -547,6 +650,65 @@ $('fsBtn').addEventListener('click', () => {
   else (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el);
 });
 
+/* ── Scenery: the repeated bits (snow, trees, fence, flowers) ── */
+function buildScene(n) {
+  $(`snow-${n}`).innerHTML = [[120,120],[320,82],[540,112],[780,96],[1010,116],[1260,92],[1500,122]]
+    .map(([x, y]) => `<path d="M${x} ${y} L${x-22} ${y+19} L${x-9} ${y+15} L${x} ${y+24} L${x+10} ${y+15} L${x+23} ${y+20}Z"/>`).join('');
+
+  const tree = ([x, y, s, kind]) => kind === 'pine'
+    ? `<g transform="translate(${x} ${y}) scale(${s})">
+         <rect x="-3" y="-8" width="6" height="10" fill="#7A4E2A"/>
+         <path d="M0 -50 L-16 -22 L-8 -22 L-20 -6 L20 -6 L8 -22 L16 -22Z" fill="#3E8E4E"/>
+         <path d="M0 -50 L-8 -36 L0 -36Z" fill="#5AAE62"/>
+       </g>`
+    : `<g transform="translate(${x} ${y}) scale(${s})">
+         <rect x="-4" y="-14" width="8" height="16" rx="2" fill="#7A4E2A"/>
+         <circle cy="-30" r="20" fill="#4FA65A"/>
+         <circle cx="-7" cy="-36" r="9" fill="#6CC070"/>
+       </g>`;
+  $(`farTrees-${n}`).innerHTML = [
+    [60,214,.7,'pine'],[88,219,.55,'pine'],[480,218,.8,'round'],[512,222,.6,'round'],[700,198,.7,'pine'],
+    [732,203,.9,'pine'],[905,212,.7,'round'],[1320,190,.8,'pine'],[1350,194,.6,'pine'],[1555,206,.8,'round'],
+  ].map(tree).join('');
+  $(`midTrees-${n}`).innerHTML = [
+    [210,244,1.1,'round'],[250,246,.8,'round'],[620,246,1.2,'round'],[1000,250,1,'pine'],
+    [1036,252,1.3,'pine'],[1240,246,.9,'round'],[1470,242,1.1,'round'],
+  ].map(tree).join('');
+
+  let bushes = '';
+  for (let x = 30; x < 1600; x += 140) {
+    bushes += `<circle cx="${x}" cy="266" r="16"/><circle cx="${x + 18}" cy="260" r="20"/><circle cx="${x + 40}" cy="267" r="15"/>`;
+  }
+  $(`bushes-${n}`).innerHTML = bushes;
+
+  let fence = `<rect x="0" y="246" width="1600" height="7" rx="3" fill="url(#woodG-${n})" stroke="#8B5A2B" stroke-width="1.5"/>
+               <rect x="0" y="266" width="1600" height="7" rx="3" fill="url(#woodG-${n})" stroke="#8B5A2B" stroke-width="1.5"/>`;
+  for (let x = 12; x < 1600; x += 54) {
+    fence += `<path d="M${x} 288 L${x} 240 L${x + 5} 234 L${x + 10} 240 L${x + 10} 288Z" fill="url(#woodG-${n})" stroke="#8B5A2B" stroke-width="1.5"/>`;
+  }
+  $(`fence-${n}`).innerHTML = fence;
+
+  const petals = ['#FFFFFF', '#FFD43B', '#FF8FAB', '#B197FC'];
+  let flowers = '';
+  for (let n = 0, x = 20; x < 1600; n++, x += 37 + (n * 53) % 41) {
+    const y = 286 + (n * 7) % 10;
+    flowers += `<circle cx="${x}" cy="${y}" r="4" fill="${petals[n % 4]}"/><circle cx="${x}" cy="${y}" r="1.6" fill="#F59F00"/>`;
+  }
+  $(`flowers-${n}`).innerHTML = flowers;
+}
+
+// one countryside for each player, each with its own ids
+function makeScene(n) {
+  const html = $('sceneTpl').innerHTML
+    .replace(/id="(\w+)"/g, `id="$1-${n}"`)
+    .replace(/url\(#(skyG|mtnG|woodG)\)/g, `url(#$1-${n})`)
+    .replace(/href="#land"/g, `href="#land-${n}"`);
+  $(`scene${n}`).innerHTML = html;
+  buildScene(n);
+}
+
+makeScene(0);
+makeScene(1);
 buildOptions();
 buildBoard();
 state = PLAYERS.map(() => ({ progress: 0, input: '', locked: true, q: makeQuestion() }));
